@@ -1,0 +1,147 @@
+<div class="main-layout-grid">
+  <!-- CENTER: Primary Interaction Area -->
+  <section class="content-column fade-up">
+    <!-- Header -->
+    <div class="dash-header">
+      <div class="header-left">
+        <h1 class="section-title">
+          <span class="level-icon">{{ levelIcon }}</span>
+          Welcome Back, {{ userSvc.profile()?.username || 'Quester' }}
+        </h1>
+        <p class="header-sub">Your sidequests await. Don't let the streak die.</p>
+      </div>
+      <div class="header-right">
+        <a routerLink="/quests" class="neon-btn">⚔️ Find Quests</a>
+      </div>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="stats-grid">
+      <!-- XP Card -->
+      <div class="stat-card premium-card xp-card">
+        <div class="stat-card-header">
+          <span class="stat-label">Experience Points</span>
+          <span class="level-badge level-{{ level }}">{{ levelIcon }} {{ level }}</span>
+        </div>
+        <div class="stat-big">{{ xp | number }}</div>
+        <app-xp-bar
+          [currentXp]="xp"
+          [pct]="userSvc.xpProgress()?.pct ?? 0"
+          [nextLevel]="userSvc.xpProgress()?.nextLevel ?? null"
+          [xpToNext]="userSvc.xpProgress()?.xpToNextLevel ?? 0"
+        />
+      </div>
+
+      <!-- Streak Card -->
+      <div class="stat-card premium-card streak-card">
+        <div class="stat-card-header">
+          <span class="stat-label">Current Streak</span>
+          <span class="stat-pill">🔥 Best: {{ userSvc.profile()?.longestStreak ?? 0 }}d</span>
+        </div>
+        <div class="streak-display">
+          <span class="streak-number">{{ streak }}</span>
+          <span class="streak-unit">days</span>
+        </div>
+        @if (streak >= 7) {
+          <p class="streak-msg on-fire">🔥 You're on fire!</p>
+        } @else if (streak >= 3) {
+          <p class="streak-msg warming">⚡ Building momentum!</p>
+        } @else {
+          <p class="streak-msg cold">❄️ Start your streak today</p>
+        }
+      </div>
+
+      <!-- Reputation Card -->
+      <div class="stat-card premium-card rep-card">
+        <div class="stat-card-header">
+          <span class="stat-label">Reputation</span>
+          <span class="stat-pill">🗳️ {{ userSvc.profile()?.totalVotesCast ?? 0 }} votes cast</span>
+        </div>
+        <div class="stat-big gold">{{ userSvc.profile()?.reputation ?? 0 }}</div>
+        <div class="rep-breakdown">
+          <span class="rep-item green">✅ {{ userSvc.profile()?.approvedSubmissions ?? 0 }} approved</span>
+          <span class="rep-item red">❌ {{ userSvc.profile()?.rejectedSubmissions ?? 0 }} rejected</span>
+        </div>
+      </div>
+
+      <!-- Badges Card -->
+      <div class="stat-card premium-card badges-card">
+        <div class="stat-card-header">
+          <span class="stat-label">Badges Earned</span>
+          <span class="stat-pill">🏅 {{ userSvc.profile()?.badges?.length ?? 0 }}</span>
+        </div>
+        <div class="badges-grid">
+          @for (badge of (userSvc.profile()?.badges ?? []).slice(0, 6); track badge._id) {
+            <app-badge-chip [badge]="badge" />
+          }
+          @if ((userSvc.profile()?.badges?.length ?? 0) === 0) {
+            <p class="empty-sub">Complete quests to unlock badges!</p>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Quests Section -->
+    <div class="section-header">
+      <h2 class="section-title">Active Quests</h2>
+      <a routerLink="/quests" class="see-all">See All →</a>
+    </div>
+
+    @if (loading()) {
+      <div class="quests-grid">
+        @for (i of [1,2,3,4]; track i) {
+          <div class="skeleton" style="height:220px; border-radius:var(--radius-lg);"></div>
+        }
+      </div>
+    } @else if (activeQuests().length === 0) {
+      <div class="empty-state premium-card">
+        <span class="empty-icon">⚔️</span>
+        <h3>No active quests</h3>
+        <p>Browse the quest board and accept a challenge to get started.</p>
+        <a routerLink="/quests" class="neon-btn">Browse Quests</a>
+      </div>
+    } @else {
+      <div class="quests-grid">
+        @for (quest of activeQuests(); track quest._id) {
+          <app-quest-card
+            [quest]="quest"
+            (accept)="onAcceptQuest($event)"
+            (abandon)="onAbandonQuest($event)"
+          />
+        }
+      </div>
+    }
+
+    <!-- Recent Submissions -->
+    <div class="section-header" style="margin-top:2.5rem">
+      <h2 class="section-title">Recent Submissions</h2>
+      <a routerLink="/submissions/my" class="see-all">See All →</a>
+    </div>
+
+    @if (recentSubs().length === 0) {
+      <div class="empty-state-inline">
+        <span>📸 No submissions yet — complete a quest and upload proof!</span>
+      </div>
+    } @else {
+      <div class="subs-list">
+        @for (sub of recentSubs(); track sub._id) {
+          <a [routerLink]="'/submissions/' + sub._id" class="sub-row premium-card">
+            @if (sub.mediaUrls[0]) {
+              <div class="sub-thumb" [style.background-image]="'url(' + sub.mediaUrls[0] + ')'"></div>
+            } @else {
+              <div class="sub-thumb-placeholder">📸</div>
+            }
+            <div class="sub-info">
+              <span class="sub-quest-title">{{ getQuestTitle(sub) }}</span>
+              <span class="sub-date">{{ sub.createdAt | date:'MMM d, y' }}</span>
+            </div>
+            <div class="sub-status" [class]="statusClass(sub)">{{ statusLabel(sub) }}</div>
+          </a>
+        }
+      </div>
+    }
+  </section>
+
+  <!-- RIGHT: Persistent Utility Rail -->
+  <app-utility-rail />
+</div>

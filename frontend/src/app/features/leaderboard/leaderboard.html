@@ -1,0 +1,171 @@
+<div class="main-layout-grid">
+  <!-- CENTER: hall of fame -->
+  <section class="content-column fade-up">
+    <header class="lb-header">
+      <div class="title-wrap">
+        <h1>Hall of Fame</h1>
+        <p>Battle for the top rank in the SideQuest Realm</p>
+      </div>
+        
+      @if (!loading() && myEntry) {
+        <div class="battle-brief premium-card fade-in">
+          <div class="brief-stats">
+            <div class="brief-main">
+              <span class="brief-rank">Current Rank: #{{ myEntry.globalRank }}</span>
+              <span class="brief-xp">{{ (activeTab() === 'weekly' ? myEntry.weeklyXp : activeTab() === 'monthly' ? myEntry.monthlyXp : myEntry.totalXp) | number }} XP</span>
+            </div>
+            <div class="brief-target">
+              @if (nextPlayer) {
+                <span class="target-name">Next Target: <span class="highlight">@{{ nextPlayer.username }}</span></span>
+                <span class="target-gap">Gains: <span class="neon-purple">+{{ xpToOvertake | number }} XP</span> to overtake</span>
+              } @else {
+                <span class="target-name highlight">👑 REALM CHAMPION</span>
+                <span class="target-gap">Defend your title!</span>
+              }
+            </div>
+          </div>
+          <div class="brief-bar-wrap">
+            <div class="brief-bar-track">
+              <div class="brief-bar-fill" [style.width.%]="nextPlayer ? (100 - (xpToOvertake / 1000 * 100)) : 100"></div>
+            </div>
+          </div>
+        </div>
+      }
+    </header>
+
+    <!-- Tabs -->
+    <div class="lb-tabs-premium">
+      <button class="lb-tab-btn" [class.active]="activeTab() === 'global'"  (click)="setTab('global')">
+        <span class="tab-icon">🌍</span> Global
+      </button>
+      <button class="lb-tab-btn" [class.active]="activeTab() === 'weekly'"  (click)="setTab('weekly')">
+        <span class="tab-icon">📅</span> Weekly
+      </button>
+      <button class="lb-tab-btn" [class.active]="activeTab() === 'monthly'" (click)="setTab('monthly')">
+        <span class="tab-icon">📆</span> Monthly
+      </button>
+    </div>
+
+    <!-- Dramatic Tiered Podium -->
+    @if (!loading() && entries().length >= 3) {
+      <div class="arena-podium fade-in">
+        <!-- 2ND PLACE -->
+        <div class="podium-pillar rank-2">
+          <div class="pillar-content">
+            <div class="p-avatar-wrap">
+              <a [routerLink]="'/profile/' + entries()[1].username">
+                <img [src]="entries()[1].avatar" class="p-avatar" />
+              </a>
+              <div class="p-rank-tag silver">2</div>
+            </div>
+            <div class="p-info">
+              <span class="p-name">@{{ entries()[1].username }}</span>
+              <span class="p-xp">{{ (activeTab() === 'weekly' ? entries()[1].weeklyXp : activeTab() === 'monthly' ? entries()[1].monthlyXp : entries()[1].totalXp) | number }} XP</span>
+            </div>
+          </div>
+          <div class="pillar-base silver-base"></div>
+        </div>
+
+        <!-- 1ST PLACE -->
+        <div class="podium-pillar rank-1">
+          <div class="crown-wrap">👑</div>
+          <div class="pillar-content">
+            <div class="p-avatar-wrap champion">
+              <a [routerLink]="'/profile/' + entries()[0].username">
+                <img [src]="entries()[0].avatar" class="p-avatar" />
+              </a>
+              <div class="p-rank-tag gold">1</div>
+            </div>
+            <div class="p-info">
+              <span class="p-name champion-text">@{{ entries()[0].username }}</span>
+              <span class="p-xp gold-text">{{ (activeTab() === 'weekly' ? entries()[0].weeklyXp : activeTab() === 'monthly' ? entries()[0].monthlyXp : entries()[0].totalXp) | number }} XP</span>
+            </div>
+          </div>
+          <div class="pillar-base gold-base">
+            <div class="pillar-glow"></div>
+          </div>
+        </div>
+
+        <!-- 3RD PLACE -->
+        <div class="podium-pillar rank-3">
+          <div class="pillar-content">
+            <div class="p-avatar-wrap">
+              <a [routerLink]="'/profile/' + entries()[2].username">
+                <img [src]="entries()[2].avatar" class="p-avatar" />
+              </a>
+              <div class="p-rank-tag bronze">3</div>
+            </div>
+            <div class="p-info">
+              <span class="p-name">@{{ entries()[2].username }}</span>
+              <span class="p-xp">{{ (activeTab() === 'weekly' ? entries()[2].weeklyXp : activeTab() === 'monthly' ? entries()[2].monthlyXp : entries()[2].totalXp) | number }} XP</span>
+            </div>
+          </div>
+          <div class="pillar-base bronze-base"></div>
+        </div>
+      </div>
+    }
+
+    <!-- Rankings Table -->
+    <div class="arena-ranking-list">
+      @if (loading()) {
+        <div class="lb-skeletons">
+          @for (i of [1,2,3,4,5,6]; track i) {
+            <div class="skeleton lb-skeleton-row"></div>
+          }
+        </div>
+      } @else {
+        @for (entry of entries(); track entry._id; let i = $index) {
+          <div class="rank-card-wrap" [style.animation-delay.ms]="i * 50">
+            <a [routerLink]="'/profile/' + entry.username" 
+               class="rank-card premium-card"
+               [class.is-current-user]="isMe(entry)"
+               [class.rank-gold]="entry.globalRank === 1"
+               [class.rank-silver]="entry.globalRank === 2"
+               [class.rank-bronze]="entry.globalRank === 3">
+              
+              <div class="rank-id-section">
+                <div class="rank-number" [class]="rankClass(entry.globalRank)">
+                  #{{ entry.globalRank }}
+                </div>
+                <div class="rank-trend" [class]="getTrend(entry._id)">
+                  @if (getTrend(entry._id) === 'up') { 🔼 }
+                  @else if (getTrend(entry._id) === 'down') { 🔽 }
+                  @else { ➖ }
+                </div>
+              </div>
+
+              <img [src]="entry.avatar" [alt]="entry.username" class="rank-avatar" />
+
+              <div class="rank-main-info">
+                <div class="rank-user-row">
+                  <span class="rank-username">@{{ entry.username }}</span>
+                  @if (isMe(entry)) {
+                    <span class="you-pill">YOU</span>
+                  }
+                </div>
+                <div class="rank-meta">
+                  <span class="rank-level level-{{ entry.level }}">{{ entry.level }}</span>
+                  <span class="rank-stat">⚔️ {{ entry.completedQuestCount }} Quests</span>
+                </div>
+              </div>
+
+              <div class="rank-badges hide-mobile">
+                @for (b of entry.badges.slice(0, 3); track b._id) {
+                  <app-badge-chip [badge]="b" [size]="'sm'" />
+                }
+              </div>
+
+              <div class="rank-xp-section">
+                <span class="rank-xp-val">{{ (activeTab() === 'weekly' ? entry.weeklyXp : activeTab() === 'monthly' ? entry.monthlyXp : entry.totalXp) | number }}</span>
+                <span class="rank-xp-lbl">XP</span>
+              </div>
+            </a>
+          </div>
+        }
+      }
+    </div>
+  </section>
+
+  <!-- RIGHT: Persistent Utility Rail -->
+  <app-utility-rail />
+</div>

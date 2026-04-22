@@ -1,0 +1,45 @@
+{
+  "name": "side-quest-maxxing-api",
+  "version": "1.0.0",
+  "description": "Side Quest Maxxing — Gamified Real-World Challenge Platform API",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "seed": "node seeds/seed.js",
+    "seed:phase1": "node seeds/seed.js",
+    "seed:phase2": "node seeds/seedPosts.js",
+    "seed:all": "node seeds/seed.js && node seeds/seedPosts.js",
+    "test": "jest --coverage --forceExit"
+  },
+  "dependencies": {
+    "@clerk/express": "^1.3.0",
+    "cloudinary": "^1.41.3",
+    "compression": "^1.7.4",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.3.1",
+    "express-validator": "^7.1.0",
+    "helmet": "^7.1.0",
+    "mongoose": "^8.4.1",
+    "morgan": "^1.10.0",
+    "multer": "^1.4.5-lts.1",
+    "multer-storage-cloudinary": "^4.0.0",
+    "node-cron": "^3.0.3",
+    "slugify": "^1.6.6",
+    "socket.io": "^4.8.3",
+    "svix": "^1.24.0",
+    "uuid": "^10.0.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "nodemon": "^3.1.4"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": [
+      "**/__tests__/**/*.test.js"
+    ]
+  }
+}

@@ -1,0 +1,80 @@
+<div class="main-layout-grid">
+  <!-- CENTER: Primary Interaction Area -->
+  <section class="content-column fade-up">
+    <header class="section-header">
+      <div class="header-text-group">
+        <h1>Quest Board</h1>
+        <p>{{ totalCount() || 0 }} protocols ready for deployment</p>
+      </div>
+    </header>
+
+    <!-- Search + filters -->
+    <div class="filters-row">
+      <div class="premium-search-box">
+        <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input
+          #searchInp
+          class="search-input-premium"
+          type="text"
+          placeholder="Search titles, tags, difficulties..."
+          [value]="searchQuery()"
+          (input)="onSearchInput(searchInp.value)"
+        />
+      </div>
+      <div class="filter-chips">
+        @for (d of difficulties; track d) {
+          <button
+            class="diff-btn"
+            [class.active]="selectedDifficulty() === d"
+            (click)="setDifficulty(selectedDifficulty() === d ? '' : d)"
+          >{{ d }}</button>
+        }
+      </div>
+      @if (selectedCategory() || selectedDifficulty() || searchQuery()) {
+        <button class="clear-btn" (click)="clearFilters()">✕ Clear</button>
+      }
+    </div>
+
+    <!-- Category row -->
+    <div class="category-row">
+      <button class="cat-btn" [class.active]="selectedCategory() === ''" (click)="setCategory('')">
+        🌐 All
+      </button>
+      @for (cat of categories(); track cat) {
+        <button class="cat-btn" [class.active]="selectedCategory() === cat" (click)="setCategory(selectedCategory() === cat ? '' : cat)">
+          {{ categoryIcon(cat) }} {{ cat | titlecase }}
+        </button>
+      }
+    </div>
+
+    <!-- Quest grid -->
+    @if (loading()) {
+      <div class="quests-grid">
+        @for (i of [1,2,3,4,5,6]; track i) {
+          <div class="skeleton" style="height:240px; border-radius:16px;"></div>
+        }
+      </div>
+    } @else if (quests().length === 0) {
+      <div class="premium-card" style="text-align: center;">
+        <span class="empty-icon" style="font-size: 3rem; display: block; margin-bottom: var(--s-16);">🏜️</span>
+        <h3>No Quests Found</h3>
+        <p>Your search or filters didn't match any available protocols.</p>
+        <button class="neon-btn" style="margin-top: var(--s-24);" (click)="clearFilters()">Reset Filters</button>
+      </div>
+    } @else {
+      <div class="quests-grid">
+        @for (quest of quests(); track quest._id) {
+          <div class="quest-wrap">
+            <app-quest-card [quest]="quest" (accept)="accept($event)" (abandon)="abandon($event)" />
+          </div>
+        }
+      </div>
+    }
+  </section>
+
+  <!-- RIGHT: Persistent Utility Rail -->
+  <app-utility-rail />
+</div>

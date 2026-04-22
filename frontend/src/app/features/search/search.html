@@ -1,0 +1,129 @@
+<div class="main-layout-grid">
+  <!-- CENTER: Primary Interaction Area -->
+  <section class="content-column fade-up">
+    <!-- ── Hero / Search bar ───────────────────────────────────────────── -->
+    <div class="search-hero">
+      <h1 class="search-title">🔍 Find Questers</h1>
+      <p class="search-sub">Discover users, see their quests, follow their journey.</p>
+
+      <div class="search-bar-wrap">
+        <span class="search-icon">🔍</span>
+        <input
+          id="user-search-input"
+          class="search-input"
+          type="text"
+          placeholder="Search by username…"
+          [value]="query()"
+          (input)="onInput($any($event.target).value)"
+          (keydown.enter)="doSearch(query())"
+          autocomplete="off"
+          autofocus
+        />
+        @if (loading()) {
+          <span class="search-spinner">⏳</span>
+        }
+      </div>
+    </div>
+
+    <!-- ── Results ────────────────────────────────────────────────────── -->
+    <div class="search-body">
+
+      @if (loading() && results().length === 0) {
+        <!-- Skeleton -->
+        <div class="results-grid">
+          @for (i of [1,2,3,4,5,6]; track i) {
+            <div class="user-card skeleton"></div>
+          }
+        </div>
+
+      } @else if (searched() && results().length === 0) {
+        <div class="empty-state">
+          <span class="empty-icon">🕵️</span>
+          <h3>No users found</h3>
+          <p>Try a different username or partial name.</p>
+        </div>
+
+      } @else if (!searched() && !loading()) {
+        <!-- Hint state -->
+        <div class="hint-state">
+          <div class="hint-grid">
+            <div class="hint-card premium-card">
+              <span class="hint-icon">🔍</span>
+              <span>Search any username</span>
+            </div>
+            <div class="hint-card premium-card">
+              <span class="hint-icon">👤</span>
+              <span>View their profile</span>
+            </div>
+            <div class="hint-card premium-card">
+              <span class="hint-icon">➕</span>
+              <span>Follow their journey</span>
+            </div>
+          </div>
+        </div>
+
+      } @else {
+        <p class="result-count">{{ results().length }} user{{ results().length !== 1 ? 's' : '' }} found</p>
+        <div class="results-grid">
+          @for (user of results(); track user._id) {
+            <div class="user-card premium-card">
+
+              <!-- Avatar + level -->
+              <a [routerLink]="'/profile/' + user.username" class="user-avatar-wrap">
+                <img [src]="user.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + user.username"
+                     [alt]="user.username" class="user-avatar" />
+                <span class="level-badge level-{{ levelClass(user.level) }}">{{ user.level }}</span>
+              </a>
+
+              <!-- Info -->
+              <div class="user-info">
+                <a [routerLink]="'/profile/' + user.username" class="user-name">{{ user.username }}</a>
+                <p class="user-bio">{{ user.bio || 'No bio yet.' }}</p>
+
+                <!-- Stats row -->
+                <div class="user-stats">
+                  <span class="stat"><span class="stat-val">{{ user.xp | number }}</span> XP</span>
+                  <span class="stat-sep">·</span>
+                  <span class="stat"><span class="stat-val">{{ user.followerCount }}</span> Followers</span>
+                  <span class="stat-sep">·</span>
+                  <span class="stat"><span class="stat-val">{{ user.reputation }}</span> Rep</span>
+                </div>
+
+                <!-- Badges (max 3) -->
+                @if (user.badges && user.badges.length) {
+                  <div class="user-badges">
+                    @for (b of user.badges.slice(0, 3); track b.name) {
+                      <span class="badge-chip" [title]="b.name">{{ b.icon }}</span>
+                    }
+                    @if (user.badges.length > 3) {
+                      <span class="badge-chip badge-more">+{{ user.badges.length - 3 }}</span>
+                    }
+                  </div>
+                }
+              </div>
+
+              <!-- Action buttons -->
+              <div class="user-actions">
+                <a [routerLink]="'/profile/' + user.username" class="neon-btn-outline sm-btn">View Profile</a>
+                @if (clerk.isSignedIn()) {
+                  <button
+                    class="neon-btn sm-btn"
+                    [class.following]="user.isFollowing"
+                    [disabled]="user.followLoading"
+                    (click)="toggleFollow(user)"
+                  >
+                    {{ user.followLoading ? '…' : user.isFollowing ? '✓ Following' : '+ Follow' }}
+                  </button>
+                }
+              </div>
+
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- RIGHT: Persistent Utility Rail -->
+  <app-utility-rail />
+</div>

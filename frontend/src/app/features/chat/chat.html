@@ -1,0 +1,183 @@
+<div class="chat-viewport">
+  <div class="chat-app-grid glass-card">
+    
+    <!-- PANEL 1: Conversations & Search -->
+    <aside class="sidebar-conversations">
+      <div class="sidebar-top">
+        <h2 class="sidebar-title">Messages</h2>
+        <div class="search-box">
+          <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="text" 
+                 [ngModel]="searchText()" 
+                 (ngModelChange)="searchText.set($event)"
+                 placeholder="Search chats..." 
+                 class="search-input" />
+        </div>
+      </div>
+      
+      <div class="scroll-list">
+        @for (conv of filteredConversations(); track conv.userId) {
+          <div class="conversation-item" 
+               [class.active]="chatSvc.activeChatId() === conv.userId"
+               (click)="selectConversation(conv)">
+            <div class="avatar-container">
+              <img [src]="conv.avatar || fallbackAvatar" [alt]="conv.username" class="user-avatar" />
+              @if (conv.unread > 0) { <span class="unread-dot"></span> }
+            </div>
+            <div class="item-content">
+              <div class="item-header">
+                <span class="user-name">@{{ conv.username }}</span>
+                <span class="msg-time-short">{{ conv.lastAt | date:'shortTime' }}</span>
+              </div>
+              <div class="item-meta">
+                <p class="preview-text" [class.unread]="conv.unread > 0">
+                  @if (conv.isTyping) { <span class="typing-glow">typing...</span> }
+                  @else { {{ conv.isMine ? 'You: ' : '' }}{{ conv.lastMsg }} }
+                </p>
+                @if (conv.unread > 0) { <span class="unread-count">{{ conv.unread }}</span> }
+              </div>
+            </div>
+          </div>
+        } @empty {
+          <div class="empty-list">
+            <span class="empty-icon">🌑</span>
+            <p>No connections found.</p>
+          </div>
+        }
+      </div>
+    </aside>
+
+    <!-- PANEL 2: Active Conversation -->
+    <main class="chat-main">
+      @if (chatSvc.activeChatId()) {
+        <!-- Header -->
+        <header class="main-header">
+          <div class="header-user">
+            <img [src]="otherUser?.avatar || fallbackAvatar" class="header-avatar" />
+            <div class="header-labels">
+              <span class="header-name">@{{ otherUser?.username || 'Transmission...' }}</span>
+              <span class="header-status" [class.status-typing]="otherUser?.isTyping">
+                {{ otherUser?.isTyping ? 'Typing something epic...' : 'Secure Connection' }}
+              </span>
+            </div>
+          </div>
+          <div class="header-actions">
+            <button class="icon-toggle-info">
+               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+            </button>
+          </div>
+        </header>
+
+        <!-- Message List -->
+        <div class="message-feed" #scrollContainer>
+          @for (msg of chatSvc.messages(); track msg._id) {
+            <div class="message-bubble-row" [class.is-mine]="isMyMessage(msg)">
+              <div class="bubble-content">
+                @if (msg.attachments && msg.attachments.length > 0) {
+                  <div class="bubble-media">
+                    @for (img of msg.attachments; track img) {
+                      <img [src]="img" class="bubble-img" />
+                    }
+                  </div>
+                }
+                @if (msg.content) {
+                  <p class="bubble-text">{{ msg.content }}</p>
+                }
+                <span class="bubble-time">{{ msg.createdAt | date:'shortTime' }}</span>
+              </div>
+            </div>
+          } @empty {
+            <div class="initial-msg">
+              <span class="init-icon">🛡️</span>
+              <p>Encrypted channel initiated. Say hello!</p>
+            </div>
+          }
+        </div>
+
+        <!-- Composer -->
+        <footer class="main-footer">
+          <!-- Preview area -->
+          @if (previews.length > 0) {
+            <div class="attachment-previews">
+              @for (prev of previews; track prev; let idx = $index) {
+                <div class="preview-card">
+                  <img [src]="prev" class="preview-img" />
+                  <button class="remove-prev" (click)="removeFile(idx)">×</button>
+                </div>
+              }
+            </div>
+          }
+
+          <div class="composer-row">
+            <label class="attach-btn" title="Add Image">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+              <input type="file" (change)="onFileSelected($event)" multiple accept="image/*" hidden />
+            </label>
+            
+            <input type="text" 
+                   [(ngModel)]="newMessage" 
+                   (keydown.enter)="send()"
+                   (input)="onTyping()"
+                   placeholder="Type a message..."
+                   class="composer-input" />
+            
+            <button class="send-btn-neon" (click)="send()" [disabled]="sending() || (!newMessage.trim() && selectedFiles.length === 0)">
+              <span class="btn-text">@if(sending()){ Sending... } @else { Send }</span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+            </button>
+          </div>
+        </footer>
+      } @else {
+        <div class="empty-state">
+           <div class="empty-state-card glass-card">
+             <div class="empty-glow"></div>
+             <span class="empty-portal">🌌</span>
+             <h3>Encryption Active</h3>
+             <p>Select a contact to begin your transmission. Every message is secure.</p>
+           </div>
+        </div>
+      }
+    </main>
+
+    <!-- PANEL 3: User Details & Media -->
+    <aside class="sidebar-details">
+      @if (chatSvc.activeChatId()) {
+        <div class="details-top">
+          <div class="profile-summary">
+            <div class="summary-avatar-ring">
+              <img [src]="otherUser?.avatar || fallbackAvatar" [alt]="otherUser?.username" class="summary-avatar" />
+              <span class="status-indicator online"></span>
+            </div>
+            <h3 class="summary-name">@{{ otherUser?.username || 'Acquiring...' }}</h3>
+            <span class="summary-rank level-{{ otherUser?.level }}">Rank: {{ otherUser?.level }}</span>
+          </div>
+
+          <div class="social-quick-actions">
+            <a [routerLink]="['/profile', otherUser?.username]" class="neon-btn-outline sm-btn">View Full Profile</a>
+          </div>
+        </div>
+
+        <div class="details-media-section">
+          <h4 class="media-title">Shared Chronicles</h4>
+          <div class="media-grid custom-scrollbar">
+            @for (img of chatSvc.sharedMedia(); track img) {
+              <div class="media-item">
+                <img [src]="img" class="media-img" loading="lazy" />
+              </div>
+            } @empty {
+              <div class="media-empty">No shared media yet.</div>
+            }
+          </div>
+        </div>
+      } @else {
+        <div class="details-idle">
+           <p>Participant info will appear here.</p>
+        </div>
+      }
+    </aside>
+
+  </div>
+</div>

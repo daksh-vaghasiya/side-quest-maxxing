@@ -1,0 +1,99 @@
+<div class="page-container">
+  <h1 class="section-title">📸 Upload Proof</h1>
+
+  @if (quest()) {
+    <div class="quest-context glass-card-static">
+      <span class="quest-tag">⚔️ Quest</span>
+      <span class="quest-name">{{ quest()!.title }}</span>
+      <span class="xp-reward">+{{ quest()!.xpReward }} XP on approval</span>
+    </div>
+  }
+
+  @if (success()) {
+    <div class="success-state">
+      <span class="success-icon">🎉</span>
+      <h2>Submission Uploaded!</h2>
+      <p>Your proof is now in the voting queue. The community will validate it.</p>
+      <div class="success-bar"><div class="success-bar-fill"></div></div>
+    </div>
+  } @else {
+    <form class="submit-form" (ngSubmit)="submit()">
+      <!-- Media Upload Zone -->
+      <div class="upload-section">
+        <label class="upload-zone" for="media-input">
+          @if (previews().length === 0) {
+            <span class="upload-icon">📁</span>
+            <span class="upload-text">Click to upload images or videos</span>
+            <span class="upload-sub">Max 5 files, 50MB each. PNG, JPG, MP4, MOV</span>
+          } @else {
+            <span class="upload-added">✅ {{ files().length }} file(s) selected — click to add more</span>
+          }
+        </label>
+        <input id="media-input" type="file" multiple accept="image/*,video/*" style="display:none" (change)="onFilesSelected($event)" />
+
+        <!-- Previews -->
+        @if (previews().length > 0) {
+          <div class="previews-grid">
+            @for (p of previews(); track p; let i = $index) {
+              <div class="preview-item">
+                @if (isVideo(files()[i])) {
+                  <video [src]="p" class="preview-media" muted></video>
+                  <span class="preview-type">▶ Video</span>
+                } @else {
+                  <img [src]="p" class="preview-media" />
+                }
+                <button type="button" class="remove-btn" (click)="removeFile(i)">✕</button>
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Description -->
+      <div class="field-group">
+        <label class="field-label" for="desc">Description <span class="optional">(optional)</span></label>
+        <textarea
+          id="desc"
+          class="input-field"
+          rows="4"
+          placeholder="Describe what you did, how it went, what you learned..."
+          [value]="description()"
+          (input)="description.set($any($event.target).value)"
+        ></textarea>
+        <span class="char-count">{{ description().length }}/1000</span>
+      </div>
+
+      <!-- Requirements reminder -->
+      @if (quest()?.requirements?.length) {
+        <div class="req-reminder">
+          <h4>📋 Checklist</h4>
+          @for (req of quest()!.requirements; track req) {
+            <label class="req-item">
+              <input type="checkbox" /> {{ req }}
+            </label>
+          }
+        </div>
+      }
+
+      <!-- Error -->
+      @if (error()) {
+        <div class="error-msg">⚠️ {{ error() }}</div>
+      }
+
+      <!-- Validation info -->
+      <div class="validation-info glass-card-static">
+        <span class="v-icon">🗳️</span>
+        <div>
+          <strong>Community Validation</strong>
+          <p>Your submission needs at least 10 votes with 70%+ "Legit" to be approved and earn XP.</p>
+        </div>
+      </div>
+
+      <!-- Submit button -->
+      <button type="submit" class="neon-btn submit-btn" [disabled]="submitting() || files().length === 0">
+        @if (submitting()) { ⏳ Uploading... }
+        @else { 🚀 Submit Proof }
+      </button>
+    </form>
+  }
+</div>

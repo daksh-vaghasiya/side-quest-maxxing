@@ -1,0 +1,107 @@
+/* ── QUEST LIST PAGE ────────────────────────────────────────────────────── */
+
+/* ── Filters ─────────────────────────────────────────────────────────────── */
+.filters-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-12);
+  flex-wrap: wrap;
+  margin-bottom: var(--s-16);
+}
+
+.premium-search-box {
+  display: flex;
+  align-items: center;
+  gap: var(--s-8);
+  flex: 1;
+  max-width: 400px;
+  background: var(--input-bg);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
+  padding: 0.65rem var(--s-12);
+  transition: var(--trans-fast);
+}
+
+.premium-search-box:focus-within {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--input-focus);
+  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.1);
+}
+
+.search-icon-inline { color: var(--text-mute); flex-shrink: 0; }
+
+.search-input-premium {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-main);
+  font-family: var(--font-main);
+  font-size: var(--fs-sm);
+  outline: none;
+}
+
+.search-input-premium::placeholder { color: var(--text-mute); }
+
+/* Filter Chips */
+.filter-chips { display: flex; gap: var(--s-8); flex-wrap: wrap; }
+
+.diff-btn {
+  padding: 0.45rem 0.9rem;
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid var(--border-glass);
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text-secondary);
+  transition: var(--trans-fast);
+  font-family: var(--font-heading);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.diff-btn:hover { color: var(--text-main); border-color: rgba(255,255,255,0.15); background: rgba(255,255,255,0.05); }
+.diff-btn.active { background: rgba(245, 158, 11, 0.1); border-color: var(--neon-gold); color: var(--neon-gold); }
+
+/* Category row */
+.category-row {
+  display: flex;
+  gap: var(--s-8);
+  flex-wrap: wrap;
+  margin-bottom: var(--s-24);
+}
+
+.cat-btn {
+  padding: 0.4rem 1rem;
+  border-radius: 999px;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--border-glass);
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text-secondary);
+  transition: var(--trans-fast);
+  font-family: var(--font-main);
+}
+
+.cat-btn:hover  { color: var(--text-main); border-color: rgba(255,255,255,0.15); background: rgba(255,255,255,0.05); }
+.cat-btn.active { background: rgba(139, 92, 246, 0.1); border-color: var(--neon-purple); color: var(--neon-purple); }
+
+/* Quest Grid */
+.quests-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--s-24);
+}
+
+/* Quest skeleton */
+.quest-skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--s-24);
+}
+
+@media (max-width: 640px) {
+  .quests-grid, .quest-skeleton-grid { grid-template-columns: 1fr; }
+  .premium-search-box { max-width: 100%; }
+}

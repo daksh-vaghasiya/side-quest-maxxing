@@ -1,0 +1,121 @@
+<aside class="sidebar-dashboard" [class.collapsed]="isCollapsed()" [class.mobile-open]="mobileOpen()">
+  <!-- TOP: Brand & Toggle -->
+  <div class="sidebar-header">
+    <a routerLink="/feed" class="sidebar-logo">
+      <div class="logo-icon-wrapper">
+        <span class="logo-icon">⚡</span>
+      </div>
+      <span class="logo-text" [class.hidden]="isCollapsed()">Side<span class="logo-accent">Quest</span></span>
+    </a>
+    <button class="toggle-btn" (click)="toggleSidebar()" [title]="isCollapsed() ? 'Expand Menu' : 'Collapse Menu'">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" [attr.d]="isCollapsed() ? 'M13 5l7 7-7 7M5 5l7 7-7 7' : 'M11 19l-7-7 7-7M19 19l-7-7 7-7'"></path>
+      </svg>
+    </button>
+  </div>
+
+  <!-- MID: Navigation Links -->
+  <div class="sidebar-nav custom-scrollbar">
+    <div class="nav-section-label" [class.hidden]="isCollapsed()">Main Protocol</div>
+    @for (link of navLinks; track link.path) {
+      <a [routerLink]="link.path" 
+         routerLinkActive="nav-active" 
+         class="nav-link-item" 
+         [attr.title]="isCollapsed() ? link.label : null"
+         (click)="closeMobile()">
+        <span class="nav-item-icon">{{ link.icon }}</span>
+        <span class="nav-item-label" [class.hidden]="isCollapsed()">{{ link.label }}</span>
+        @if (!isCollapsed() && link.path === '/chat' && chatSvc.totalUnread() > 0) {
+          <span class="item-badge">{{ chatSvc.totalUnread() }}</span>
+        }
+      </a>
+    }
+  </div>
+
+  <!-- BOTTOM: Status & Controls -->
+  <div class="sidebar-footer">
+    @if (clerk.isSignedIn()) {
+      <!-- Notifications Trigger -->
+      <div class="footer-action">
+        <button class="footer-btn" 
+                (click)="toggleNotif()" 
+                [class.active]="notifOpen()"
+                [attr.title]="isCollapsed() ? 'Notifications' : null">
+          <span class="btn-icon">🔔</span>
+          <span class="btn-label" [class.hidden]="isCollapsed()">Notifications</span>
+          @if (notifSvc.unreadCount() > 0) {
+            <span class="notif-pip"></span>
+          }
+        </button>
+
+        <!-- Notification Panel (Pops up above) -->
+        @if (notifOpen()) {
+          <div class="notif-panel glass-card">
+            <div class="panel-header">
+              <h3>Security Alerts</h3>
+              <button (click)="markAllAsRead()" class="mark-read-btn">Clear All</button>
+            </div>
+            <div class="panel-body custom-scrollbar">
+              @if (loadingNotifs()) {
+                <div class="panel-loader">Syncing...</div>
+              } @else if (notifications().length === 0) {
+                <p class="panel-empty">No new signals.</p>
+              } @else {
+                @for (n of notifications(); track n._id) {
+                  <div class="panel-item" [class.unread]="!n.read" (click)="onNotificationClick(n)">
+                    <div class="item-id">{{ n.title }}</div>
+                    <p class="item-desc">{{ n.message }}</p>
+                  </div>
+                }
+              }
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- User Profile -->
+      <div class="user-profile-section">
+        @if (userSvc.profile()?.username) {
+          <a [routerLink]="'/profile/' + userSvc.profile()!.username" class="user-block">
+            <img [src]="clerk.avatarUrl()" class="user-avatar" />
+            <div class="user-info" [class.hidden]="isCollapsed()">
+              <span class="user-handle">@{{ userSvc.profile()!.username }}</span>
+              <span class="user-lvl">Rank: {{ userSvc.profile()!.level }}</span>
+            </div>
+          </a>
+        } @else {
+          <div class="user-block">
+            <img [src]="clerk.avatarUrl()" class="user-avatar" />
+            <div class="user-info" [class.hidden]="isCollapsed()">
+              <span class="user-handle">Loading...</span>
+            </div>
+          </div>
+        }
+        <button class="logout-btn" (click)="signOut()" title="Terminate Session">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+        </button>
+      </div>
+    } @else {
+      <div class="auth-footer" [class.collapsed]="isCollapsed()">
+        <button class="neon-btn sm w-full" (click)="signIn()">
+          <span class="btn-label" [class.hidden]="isCollapsed()">Initialize</span>
+          <span class="btn-icon" [class.hidden]="!isCollapsed()">🔑</span>
+        </button>
+      </div>
+    }
+  </div>
+
+  <!-- Mobile Overlay -->
+  @if (mobileOpen()) {
+    <div class="mobile-overlay" (click)="closeMobile()"></div>
+  }
+</aside>
+
+<!-- Mobile Header (Only visible on small screens) -->
+<header class="mobile-top-bar">
+  <button class="mobile-toggle" (click)="toggleMobile()">
+    <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+  </button>
+  <div class="mobile-logo">SideQuest</div>
+  <div class="mobile-spacer"></div>
+</header>

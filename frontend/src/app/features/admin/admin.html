@@ -1,0 +1,144 @@
+<div class="main-layout-grid">
+  <!-- CENTER: Primary Interaction Area -->
+  <section class="content-column fade-up">
+    <h1 class="section-title">🛡️ Admin Protocol Control</h1>
+
+    @if (actionMsg()) {
+      <div class="action-toast">{{ actionMsg() }}</div>
+    }
+
+    <!-- Tabs -->
+    <div class="admin-tabs">
+      @for (t of [['dashboard','📊 Terminal'],['submissions','📋 Moderation'],['users','👥 Registry'],['quests','🌐 Signals'],['logs','📒 Access Logs']] ; track t[0]) {
+        <button class="tab-btn" [class.active]="activeTab() === t[0]" (click)="setTab(t[0])">{{ t[1] }}</button>
+      }
+    </div>
+
+    <!-- Dashboard tab -->
+    @if (activeTab() === 'dashboard') {
+      @if (loading()) {
+        <div class="skeleton" style="height:200px; border-radius:var(--radius-lg);"></div>
+      } @else if (stats()) {
+        <div class="stats-grid">
+          <div class="admin-stat premium-card">
+            <span class="as-label">Total Entities</span>
+            <span class="as-val">{{ stats().users.total | number }}</span>
+            <span class="as-sub" style="color: var(--status-danger)">{{ stats().users.banned }} banned</span>
+          </div>
+          <div class="admin-stat premium-card">
+            <span class="as-label">Active Protocols</span>
+            <span class="as-val">{{ stats().quests.active }}</span>
+            <span class="as-sub">of {{ stats().quests.total }} total</span>
+          </div>
+          <div class="admin-stat premium-card">
+            <span class="as-label">Pending Verification</span>
+            <span class="as-val" style="color: var(--status-warning)">{{ stats().submissions.pending }}</span>
+            <span class="as-sub">awaiting signals</span>
+          </div>
+          <div class="admin-stat premium-card">
+            <span class="as-label">Flagged Issues</span>
+            <span class="as-val" style="color: var(--status-danger)">{{ stats().submissions.flagged }}</span>
+            <span class="as-sub">require manual override</span>
+          </div>
+          <div class="admin-stat premium-card">
+            <span class="as-label">Signal Intensity</span>
+            <span class="as-val">{{ stats().votes.total | number }}</span>
+            <span class="as-sub">total validations</span>
+          </div>
+          <div class="admin-stat premium-card">
+            <span class="as-label">Logs Recorded</span>
+            <span class="as-val">{{ stats().comments.total | number }}</span>
+            <span class="as-sub">active interactions</span>
+          </div>
+        </div>
+      }
+    }
+
+    <!-- Moderation / Submissions tab -->
+    @if (activeTab() === 'submissions') {
+      <div class="mod-list">
+        @for (s of submissions(); track s._id) {
+          <div class="mod-row premium-card">
+            @if (s.mediaUrls?.[0]) {
+              <img [src]="s.mediaUrls[0]" class="mod-thumb" />
+            }
+            <div class="mod-info">
+              <span class="mod-user">@{{ s.userId?.username }}</span>
+              <span class="mod-quest">{{ s.questId?.title }}</span>
+              <span class="mod-votes">🗳️ {{ s.rawVoteCount }} signals | {{ s.approvalPct | number:'1.0-0' }}% confidence</span>
+            </div>
+            <div class="mod-actions">
+              <button class="neon-btn sm-btn" (click)="moderate(s._id, 'approve')">✅ Approve</button>
+              <button class="neon-btn-outline sm-btn" (click)="moderate(s._id, 'reject')">❌ Reject</button>
+            </div>
+          </div>
+        }
+        @if (submissions().length === 0) { <p class="empty-admin">Passive monitoring: no items require moderate intervention.</p> }
+      </div>
+    }
+
+    <!-- Registry / Users tab -->
+    @if (activeTab() === 'users') {
+      <div class="mod-list">
+        @for (u of users(); track u._id) {
+          <div class="mod-row premium-card">
+            <img [src]="u.avatar" class="user-av-sm" />
+            <div class="mod-info">
+              <span class="mod-user">@{{ u.username }} <span class="role-tag">{{ u.role }}</span></span>
+              <span class="mod-meta">{{ u.level }} • {{ u.xp | number }} XP • ⚠️ {{ u.warnings }} warnings</span>
+              @if (u.isBanned) { <span class="banned-badge">🚫 RESTRICTED</span> }
+            </div>
+            <div class="mod-actions">
+              <button class="neon-btn-outline sm-btn" (click)="warnUser(u._id)">⚠️ Warn</button>
+              <button class="neon-btn-danger sm-btn"  (click)="banUser(u._id)">🚫 Ban</button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Signals / Community quests tab -->
+    @if (activeTab() === 'quests') {
+      <div class="mod-list">
+        @for (q of cQuests(); track q._id) {
+          <div class="mod-row premium-card">
+            <div class="mod-info">
+              <span class="mod-user">{{ q.title }}</span>
+              <span class="mod-meta">{{ q.category }} • {{ q.difficulty }} • {{ q.suggestedXpReward }} XP • 🔺{{ q.upvoteCount }}</span>
+              <span class="mod-votes">Proposed by @{{ q.submittedBy?.username }} • {{ q.status }}</span>
+            </div>
+            <div class="mod-actions">
+              <button class="neon-btn sm-btn" (click)="approveCQ(q._id)">✅ Promote</button>
+              <button class="neon-btn-outline sm-btn" (click)="rejectCQ(q._id)">❌ Reject</button>
+            </div>
+          </div>
+        }
+        @if (cQuests().length === 0) { <p class="empty-admin">No community signals detected.</p> }
+      </div>
+    }
+
+    <!-- Access Logs tab -->
+    @if (activeTab() === 'logs') {
+      <div class="audit-list">
+        @for (log of auditLogs(); track log._id) {
+          <div class="audit-row premium-card">
+            <div class="audit-meta">
+              <span class="audit-action">{{ log.action }}</span>
+              <span class="audit-admin">Managed by @{{ log.adminId?.username }}</span>
+            </div>
+            <div class="audit-details">
+              <span class="audit-target">{{ log.targetType }}:{{ log.targetId }}</span>
+              @if (log.reason) {
+                <span class="audit-reason">Reason: {{ log.reason }}</span>
+              }
+            </div>
+            <span class="audit-time">{{ log.createdAt | date:'short' }}</span>
+          </div>
+        }
+      </div>
+    }
+  </section>
+
+  <!-- RIGHT: Persistent Utility Rail -->
+  <app-utility-rail />
+</div>

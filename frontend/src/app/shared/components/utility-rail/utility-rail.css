@@ -1,0 +1,130 @@
+.utility-rail {
+  width: var(--rail-w);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-32);
+}
+
+.rail-sticky-content {
+  position: sticky;
+  top: var(--s-32);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-32);
+}
+
+.rail-widget h3 {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  margin-bottom: var(--s-16);
+  color: var(--text-main);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.accent { color: var(--accent-primary); }
+
+.widget-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--s-16);
+}
+
+.pulse-dot {
+  width: 10px;
+  height: 10px;
+  background: var(--status-success);
+  border-radius: 50%;
+  box-shadow: 0 0 10px var(--status-success);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(0.95); opacity: 0.8; }
+  50% { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(0.95); opacity: 0.8; }
+}
+
+.mini-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s-16);
+}
+
+.m-stat {
+  display: flex;
+  flex-direction: column;
+}
+
+.m-val {
+  font-family: var(--font-heading);
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.02em;
+}
+
+.m-lbl {
+  font-size: 0.72rem;
+  color: var(--text-mute);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.mini-rules {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-12);
+}
+
+.mini-rules li {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  gap: var(--s-12);
+}
+
+.rule-icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.rail-footer {
+  padding-top: var(--s-24);
+  border-top: 1px solid rgba(255, 255, 255, 0.03);
+  text-align: center;
+}
+
+.rail-footer p {
+  font-size: 0.75rem;
+  color: var(--text-mute);
+  margin-bottom: var(--s-8);
+}
+
+.footer-links {
+  display: flex;
+  justify-content: center;
+  gap: var(--s-16);
+}
+
+.footer-links a {
+  color: var(--text-mute);
+  text-decoration: none;
+  font-size: 0.75rem;
+  transition: var(--trans-fast);
+  opacity: 0.6;
+}
+
+.footer-links a:hover {
+  color: var(--accent-primary);
+  opacity: 1;
+}
+
+@media (max-width: 1400px) {
+  /* Smaller screens might need to hide rail or reduce size, but we handle it via grid visibility */
+}

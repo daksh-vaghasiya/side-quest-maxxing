@@ -1,0 +1,128 @@
+<div class="main-layout-grid">
+  <!-- CENTER: Primary Interaction Area -->
+  <section class="content-column fade-up">
+    @if (loading()) {
+      <div class="skeleton" style="height:500px; border-radius:var(--radius-lg);"></div>
+    } @else if (!submission()) {
+      <div class="premium-card" style="text-align: center;">
+        <p>Protocol submission not found in the archives.</p>
+        <a routerLink="/feed" class="neon-btn" style="margin-top: var(--s-16);">← Back to Feed</a>
+      </div>
+    } @else {
+      <div class="detail-layout">
+        <!-- Media Section -->
+        <div class="media-container">
+          <div class="media-section premium-card">
+            @for (url of submission()!.mediaUrls; track url; let i = $index) {
+              @if (activeMedia() === i) {
+                @if (submission()!.mediaTypes[i] === 'video') {
+                  <video [src]="url" class="main-media" controls></video>
+                } @else {
+                  <img [src]="url" class="main-media" [alt]="'Proof ' + (i+1)" />
+                }
+              }
+            }
+          </div>
+
+          <!-- Thumbnail strip -->
+          @if (submission()!.mediaUrls.length > 1) {
+            <div class="thumb-strip">
+              @for (url of submission()!.mediaUrls; track url; let i = $index) {
+                <button class="thumb-btn" [class.active]="activeMedia() === i" (click)="activeMedia.set(i)">
+                  <img [src]="url" class="thumb-img" />
+                </button>
+              }
+            </div>
+          }
+
+          <!-- Summary info -->
+          <div class="sub-info-row premium-card" style="margin-top:var(--s-16);">
+            <div class="si-stat">
+              <span class="si-val">{{ submission()!.likeCount }}</span><span class="si-lbl">Likes</span>
+            </div>
+            <div class="si-stat">
+              <span class="si-val">{{ submission()!.commentCount }}</span><span class="si-lbl">Comments</span>
+            </div>
+            <div class="si-stat">
+              <span [class]="'si-val ' + statusColor">{{ submission()!.status | titlecase }}</span><span class="si-lbl">Status</span>
+            </div>
+            <button class="action-btn" [class.liked]="submission()!.isLiked" (click)="toggleLike()">
+              {{ submission()!.isLiked ? '❤️' : '🤍' }} Like
+            </button>
+          </div>
+
+          <!-- Comments -->
+          <div class="comments-section premium-card" style="margin-top: var(--s-24);">
+            <h3 class="comments-title">Communication Logs</h3>
+            
+            <div class="comments-list custom-scrollbar">
+              @for (c of comments(); track c._id) {
+                <div class="comment-row">
+                  <img [src]="c.authorId?.avatar" class="c-avatar" />
+                  <div class="c-body">
+                    <div class="c-header">
+                      <span class="c-name">@{{ c.authorId?.username }}</span>
+                      @if (c.createdAt) {
+                        <span class="c-time">{{ c.createdAt | date:'MMM d' }}</span>
+                      }
+                    </div>
+                    <span class="c-text">{{ c.text }}</span>
+                  </div>
+                </div>
+              }
+            </div>
+
+            @if (clerk.isSignedIn()) {
+              <div class="comment-input-wrapper">
+                <img [src]="clerk.avatarUrl()" class="c-avatar" />
+                <div class="input-container">
+                  <input class="modern-input" type="text" placeholder="Add to the log…"
+                    [value]="commentText()" (input)="commentText.set($any($event.target).value)"
+                    (keydown.enter)="addComment()" />
+                  <button class="post-text-btn" (click)="addComment()" [disabled]="!commentText().trim()">Post</button>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Sidebar within Content (Vote panel) -->
+        <div class="vote-sticky-wrap">
+          <div class="premium-card vote-panel">
+            @if (voteSummary()) {
+              <h3 class="vote-title">🗳️ Validation Protocol</h3>
+
+              <div class="vote-numbers">
+                <span class="legit-n">✅ {{ voteSummary()!.legitimVotes }}</span>
+                <span class="vote-total">{{ voteSummary()!.rawVoteCount }} Total</span>
+                <span class="notlegit-n">❌ {{ voteSummary()!.notLegitVotes }}</span>
+              </div>
+
+              <div class="vote-track">
+                <div class="vote-fill" [style.width]="approvalPct + '%'"
+                  [style.background]="approvalPct >= 70 ? 'var(--status-success)' : approvalPct < 30 ? 'var(--status-danger)' : 'var(--status-warning)'">
+                </div>
+              </div>
+              <p class="votes-needed">{{ voteSummary()!.votesNeeded }} more signals needed</p>
+
+              <div class="vote-btns">
+                <button class="legit-btn" [class.voted]="voteSummary()!.userVote === 'legit'"
+                  [disabled]="votingInProgress()" (click)="castVote('legit')">
+                  ✅ Legit
+                </button>
+                <button class="notlegit-btn" [class.voted]="voteSummary()!.userVote === 'not_legit'"
+                  [disabled]="votingInProgress()" (click)="castVote('not_legit')">
+                  ❌ Not Legit
+                </button>
+              </div>
+              <p class="meta-tag">{{ approvalPct }}% approval — 70% required</p>
+            }
+          </div>
+        </div>
+      </div>
+    }
+  </section>
+
+  <!-- RIGHT: Persistent Utility Rail -->
+  <app-utility-rail />
+</div>

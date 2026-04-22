@@ -1,0 +1,194 @@
+<div class="main-layout-grid">
+  <!-- CENTER: Primary Interaction Area -->
+  <section class="content-column fade-up">
+    <!-- MAIN FEED COLUMN -->
+    <div class="feed-main">
+      <!-- Hero / Header -->
+      <header class="feed-header">
+        <div class="header-text">
+          <h1 class="feed-title">Realm <span class="accent">Pulse</span></h1>
+          <p class="feed-sub">The live stream of truth. Validate or be debunked.</p>
+        </div>
+        <div class="header-actions">
+          @if (clerk.isSignedIn()) {
+            <a routerLink="/quests" class="premium-btn">
+              <span class="btn-glow"></span>
+              <span class="btn-text">⚔️ New Quest</span>
+            </a>
+          }
+        </div>
+      </header>
+
+      <!-- Category Filter (Sleek Strip) -->
+      <nav class="filter-strip-premium custom-scrollbar">
+        @for (f of filters; track f.key) {
+          <button 
+            class="premium-chip" 
+            [class.active]="activeFilter() === f.key" 
+            (click)="setFilter(f.key)"
+          >
+            <span class="chip-label">{{ f.label }}</span>
+            @if (activeFilter() === f.key) { <span class="chip-dot"></span> }
+          </button>
+        }
+      </nav>
+
+      <!-- Feed Grid / List -->
+      <div class="submissions-list">
+        @if (loading() && submissions().length === 0) {
+          @for (i of [1,2,3]; track i) {
+            <div class="skeleton premium-card-skeleton"></div>
+          }
+        } @else if (submissions().length === 0) {
+          <div class="empty-state-premium glass-card">
+            <span class="empty-icon">🌑</span>
+            <h3>No proof detected</h3>
+            <p>The realm is quiet. Be the first to break the silence.</p>
+            <a routerLink="/quests" class="neon-btn sm">Explore Quests</a>
+          </div>
+        } @else {
+          @for (sub of submissions(); track sub._id) {
+            <article class="premium-card" [class.voting-now]="sub.status === 'pending'">
+              
+              <!-- Post Header: User Info -->
+              <header class="post-header-premium">
+                <a [routerLink]="'/profile/' + submitterName(sub)" class="user-pill-link">
+                  <div class="avatar-container">
+                    <img [src]="submitterAvatar(sub)" [alt]="submitterName(sub)" class="user-avatar" />
+                    <div class="level-indicator level-{{ submitterLevel(sub) }}"></div>
+                  </div>
+                  <div class="user-meta-data">
+                    <span class="username">@{{ submitterName(sub) }}</span>
+                    <span class="user-rank">{{ submitterLevel(sub) }}</span>
+                  </div>
+                </a>
+                <div class="post-meta-right">
+                  <span class="quest-pill" [title]="questTitle(sub)">
+                    <span class="pill-dot"></span> {{ questTitle(sub) }}
+                  </span>
+                  <button class="menu-dots">•••</button>
+                </div>
+              </header>
+
+              <!-- Media Evidence Area -->
+              <div class="post-media-area">
+                <a [routerLink]="'/submissions/' + sub._id" class="media-frame">
+                  @if (isVideo(sub)) {
+                    <video [src]="sub.mediaUrls[0]" class="evidence-media" muted loop autoplay playsinline></video>
+                    <div class="media-overlay">
+                      <span class="media-badge">VIDEO PROOF</span>
+                    </div>
+                  } @else {
+                    <img [src]="sub.mediaUrls[0]" [alt]="questTitle(sub)" class="evidence-media" loading="lazy" />
+                    <div class="media-overlay">
+                      <span class="media-badge">EVIDENCE</span>
+                    </div>
+                  }
+
+                  <!-- Status Floating Badge -->
+                  <div class="evidence-status" [class]="'status-' + sub.status">
+                    <span class="status-glow"></span>
+                    <span class="status-text">{{ sub.status.toUpperCase() }}</span>
+                  </div>
+                </a>
+              </div>
+
+              <!-- Post Body -->
+              <div class="post-content-premium">
+                <p class="description">{{ sub.description }}</p>
+
+                <!-- Validation Dashboard (Mini) -->
+                <div class="validation-dash-mini">
+                  <div class="dash-row">
+                    <span class="dash-label">Legitimacy Score</span>
+                    <span class="dash-value" [style.color]="sub.approvalPct >= 70 ? '#10B981' : '#F59E0B'">
+                      {{ sub.approvalPct | number:'1.0-0' }}%
+                    </span>
+                  </div>
+                  <div class="dash-progress-track">
+                    <div class="dash-progress-fill" 
+                         [style.width]="sub.approvalPct + '%'"
+                         [class.low]="sub.approvalPct < 50"
+                         [class.high]="sub.approvalPct >= 70">
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Action Bar -->
+                <footer class="post-actions-premium">
+                  <div class="interaction-group">
+                    <button class="action-pill like-pill" [class.active]="sub.isLiked" (click)="toggleLike(sub)">
+                      <svg class="icon" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                      <span class="count">{{ sub.likeCount }}</span>
+                    </button>
+                    <button class="action-pill comment-pill">
+                      <svg class="icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z"/></svg>
+                      <span class="count">{{ sub.commentCount }}</span>
+                    </button>
+                  </div>
+
+                  <div class="judgement-group">
+                    @if (sub.status === 'pending') {
+                      <button class="judge-mini legit" [class.active]="userVote(sub) === 'legit'" (click)="castFeedVote(sub, 'legit', $event)">
+                        LEGIT
+                      </button>
+                      <button class="judge-mini fake" [class.active]="userVote(sub) === 'not_legit'" (click)="castFeedVote(sub, 'not_legit', $event)">
+                        FAKE
+                      </button>
+                    } @else {
+                      <div class="verified-stamp">
+                        <span class="stamp-icon">✓</span> VERIFIED
+                      </div>
+                    }
+                  </div>
+                </footer>
+
+                <!-- Inline Quick Comment -->
+                @if (clerk.isSignedIn()) {
+                  <div class="quick-comment-area">
+                    <div class="quick-avatar">
+                      <img [src]="clerk.avatarUrl()" [alt]="clerk.displayName()" />
+                    </div>
+                    <div class="input-container">
+                      <input 
+                        type="text" 
+                        placeholder="Add logic to the proof..." 
+                        class="comment-input-premium"
+                        #commentInput
+                        [value]="commentInputs()[sub._id] || ''"
+                        (input)="onCommentInput(sub._id, commentInput.value)"
+                        (keyup.enter)="postQuickComment(sub)"
+                      />
+                      <button 
+                        class="send-btn" 
+                        [disabled]="!commentInput.value.trim() || postingComment().includes(sub._id)"
+                        (click)="postQuickComment(sub)"
+                      >
+                        @if (postingComment().includes(sub._id)) {
+                          <span class="spinner-sm"></span>
+                        } @else {
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+                        }
+                      </button>
+                    </div>
+                  </div>
+                }
+              </div>
+            </article>
+          }
+
+          @if (hasMore()) {
+            <div class="pagination-footer">
+              <button class="load-more-premium" (click)="loadMore()" [disabled]="loading()">
+                {{ loading() ? 'SCANNING...' : 'LOAD MORE INTEL' }}
+              </button>
+            </div>
+          }
+        }
+      </div>
+    </div> <!-- .feed-main -->
+  </section>
+
+  <!-- RIGHT: Persistent Utility Rail -->
+  <app-utility-rail />
+</div>

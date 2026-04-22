@@ -1,0 +1,649 @@
+<div class="main-layout-grid">
+  <!-- CENTER: Primary Interaction Area -->
+  <section class="content-column fade-up">
+
+    <!-- ── Toast Notifications ────────────────────────────────────────── -->
+    <div class="toast-container">
+      @for (toast of toasts(); track toast.id) {
+        <div class="toast" [class]="'toast-' + toast.type" (click)="dismissToast(toast.id)">
+          {{ toast.msg }}
+          <button class="toast-close">×</button>
+        </div>
+      }
+    </div>
+
+    <!-- ── Loading ─────────────────────────────────────────────────────── -->
+    @if (loading()) {
+      <div class="profile-skeleton">
+        <div class="skeleton" style="height:260px; border-radius:24px;"></div>
+        <div class="skeleton-tabs">
+          @for (i of [1,2,3,4]; track i) { <div class="skeleton" style="height:44px; width:120px; border-radius:12px;"></div> }
+        </div>
+        <div class="skeleton-grid">
+          @for (i of [1,2,3,4,5,6]; track i) { <div class="skeleton" style="height:100px; border-radius:16px;"></div> }
+        </div>
+      </div>
+
+    <!-- ── Not found ───────────────────────────────────────────────────── -->
+    } @else if (!user()) {
+      <div class="not-found">
+        <span class="not-found-icon">👤</span>
+        <h2>User not found</h2>
+        <p>This quester doesn't exist or has left the realm.</p>
+        <a routerLink="/feed" class="neon-btn">← Back to Feed</a>
+      </div>
+
+    <!-- ── Profile ─────────────────────────────────────────────────────── -->
+    } @else {
+
+      <!-- Hero ──────────────────────────────────────────────────────────── -->
+      <div class="profile-hero premium-card">
+        <div class="hero-glow" [style.background]="'radial-gradient(ellipse at top left, ' + levelGlow + ' 0%, transparent 70%)'"></div>
+
+        <div class="hero-body">
+          <!-- Avatar (clickable for own profile) -->
+          <div class="avatar-zone">
+            <div class="avatar-ring" [style.box-shadow]="'0 0 0 3px ' + levelGlow + ', 0 0 30px ' + levelGlow">
+              @if (isOwnProfile()) {
+                <label for="hero-avatar-input" class="avatar-click-wrap" title="Change profile photo">
+                  <img [src]="avatarPreview() ?? user()!.avatar" [alt]="user()!.username" class="profile-avatar" />
+                  <div class="avatar-camera-overlay">
+                    <span class="camera-icon">📷</span>
+                    <span class="camera-text">Change</span>
+                  </div>
+                  <input id="hero-avatar-input" type="file" accept="image/*" (change)="onAvatarChange($event, true)" hidden />
+                </label>
+              } @else {
+                <img [src]="avatarPreview() ?? user()!.avatar" [alt]="user()!.username" class="profile-avatar" />
+              }
+              @if (avatarLoading()) {
+                <div class="avatar-uploading"><span class="spin-icon">⚡</span></div>
+              }
+            </div>
+            <div class="level-pill level-{{ user()!.level }}">{{ levelIcon }} {{ user()!.level }}</div>
+          </div>
+
+          <!-- Info -->
+          <div class="hero-info">
+            <div class="hero-name-row">
+              <div class="name-column">
+                <h1 class="profile-username">@{{ user()!.username }}</h1>
+                @if (user()!.fullName) { <h2 class="profile-full-name">{{ user()!.fullName }}</h2> }
+              </div>
+              @if (rank()) { <span class="rank-badge">#{{ rank() }} Global</span> }
+              @if (user()!.role === 'admin') { <span class="role-badge admin">⚡ Admin</span> }
+              @if (user()!.role === 'moderator') { <span class="role-badge mod">🛡️ Mod</span> }
+              @if (isOwnProfile()) {
+                <button class="hero-edit-btn" (click)="openEditModal()" title="Edit Profile">✏️ Edit</button>
+              } @else if (clerk.isSignedIn()) {
+                <div class="hero-actions-row">
+                  <button
+                    class="hero-follow-btn"
+                    [class.following]="isFollowing()"
+                    [disabled]="followLoading()"
+                    (click)="toggleFollow()"
+                  >
+                    {{ followLoading() ? '…' : isFollowing() ? '✓ Following' : '+ Follow' }}
+                  </button>
+                  <a [routerLink]="['/chat']" [queryParams]="{ user: user()?._id }" class="hero-message-btn" title="Send direct message">
+                    💬 Message
+                  </a>
+                </div>
+              }
+            </div>
+
+            <p class="profile-bio">{{ user()!.bio || 'This quester prefers to let their deeds speak.' }}</p>
+
+            <!-- Stats row -->
+            <div class="hero-stats-premium">
+              <div class="h-stat-card" (click)="openFollowers()">
+                <div class="h-stat-icon">👥</div>
+                <div class="h-stat-data">
+                  <span class="h-stat-val">{{ user()?.followers?.length || 0 }}</span>
+                  <span class="h-stat-lbl">Followers</span>
+                </div>
+              </div>
+              <div class="h-stat-card" (click)="openFollowing()">
+                <div class="h-stat-icon">✨</div>
+                <div class="h-stat-data">
+                  <span class="h-stat-val">{{ user()?.following?.length || 0 }}</span>
+                  <span class="h-stat-lbl">Following</span>
+                </div>
+              </div>
+              <div class="h-stat-card">
+                <div class="h-stat-icon">⚡</div>
+                <div class="h-stat-data">
+                  <span class="h-stat-val neon-purple">{{ (user()?.xp ?? 0) | number }}</span>
+                  <span class="h-stat-lbl">Realm XP</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- XP progress bar -->
+            @if (xpProgress()) {
+              <div class="xp-section">
+                <div class="xp-labels">
+                  <span class="xp-current">{{ (user()?.xp ?? 0) | number }} XP</span>
+                  @if (xpProgress()?.nextLevel) {
+                    <span class="xp-next">{{ (xpProgress()?.xpToNextLevel ?? 0) | number }} to {{ xpProgress()?.nextLevel }}</span>
+                  } @else {
+                    <span class="xp-next xp-max">👑 Max Level</span>
+                  }
+                </div>
+                <div class="xp-track">
+                  <div class="xp-fill" [style.width]="xpProgress()!.pct + '%'"></div>
+                </div>
+                <div class="xp-pct">{{ xpProgress()!.pct | number:'1.0-0' }}% to next level</div>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabs ──────────────────────────────────────────────────────────── -->
+      <div class="tab-nav">
+        <button class="tab-btn" [class.tab-active]="activeTab() === 'overview'"     (click)="setTab('overview')">📊 Overview</button>
+        <button class="tab-btn" [class.tab-active]="activeTab() === 'activity'"     (click)="setTab('activity')">⚡ Activity</button>
+        <button class="tab-btn" [class.tab-active]="activeTab() === 'achievements'" (click)="setTab('achievements')">🏅 Achievements</button>
+        @if (isOwnProfile()) {
+          <button class="tab-btn" [class.tab-active]="activeTab() === 'settings'"   (click)="setTab('settings')">⚙️ Settings</button>
+        }
+      </div>
+
+      <!-- ── TAB: Overview ──────────────────────────────────────────────── -->
+      @if (activeTab() === 'overview') {
+        <div class="tab-content fade-in">
+
+          <!-- Deep stats grid -->
+          <div class="stats-grid">
+            <div class="stat-card premium-card">
+              <div class="stat-icon">⚡</div>
+              <div class="stat-val neon-purple">{{ (user()?.xp ?? 0) | number }}</div>
+              <div class="stat-lbl">Total Realm XP</div>
+            </div>
+            <div class="stat-card premium-card">
+              <div class="stat-icon">🎯</div>
+              <div class="stat-val neon-green">{{ user()!.approvedSubmissions }}</div>
+              <div class="stat-lbl">Legendary Wins</div>
+            </div>
+            <div class="stat-card premium-card">
+              <div class="stat-icon">🔥</div>
+              <div class="stat-val neon-orange">{{ user()!.currentStreak }}d</div>
+              <div class="stat-lbl">Active Streak</div>
+            </div>
+            <div class="stat-card premium-card">
+              <div class="stat-icon">🏆</div>
+              <div class="stat-val neon-orange">{{ user()!.longestStreak }}</div>
+              <div class="stat-lbl">Best Streak</div>
+            </div>
+            <div class="stat-card premium-card">
+              <div class="stat-icon">⭐</div>
+              <div class="stat-val neon-cyan">{{ user()!.reputation }}</div>
+              <div class="stat-lbl">Reputation</div>
+            </div>
+            <div class="stat-card premium-card">
+              <div class="stat-icon">🗳️</div>
+              <div class="stat-val neon-purple">{{ user()!.totalVotesCast }}</div>
+              <div class="stat-lbl">Votes Cast</div>
+            </div>
+            <div class="stat-card premium-card">
+              <div class="stat-icon">📸</div>
+              <div class="stat-val">{{ user()!.totalSubmissions }}</div>
+              <div class="stat-lbl">Total Submissions</div>
+            </div>
+            <div class="stat-card premium-card">
+              <div class="stat-icon">✅</div>
+              <div class="stat-val neon-green">{{ approvalRate }}%</div>
+              <div class="stat-lbl">Approval Rate</div>
+            </div>
+          </div>
+
+          <!-- Level journey -->
+          <div class="section-card premium-card">
+            <h2 class="section-title">🗺️ Level Journey</h2>
+            <div class="level-journey">
+              @for (lvl of ['Beginner','Intermediate','Pro','Legend']; track lvl) {
+                <div class="journey-step" [class.journey-done]="levelProgress(user()!.level) >= levelProgress(lvl)" [class.journey-current]="user()!.level === lvl">
+                  <div class="journey-dot">
+                    <span class="journey-icon">{{ ({Beginner:'🌱',Intermediate:'⚡',Pro:'💎',Legend:'👑'})[lvl] }}</span>
+                  </div>
+                  <span class="journey-label">{{ lvl }}</span>
+                </div>
+                @if (lvl !== 'Legend') { <div class="journey-line" [class.journey-line-done]="levelProgress(user()!.level) > levelProgress(lvl)"></div> }
+              }
+            </div>
+          </div>
+
+          <!-- Recent submissions gallery -->
+          @if (gallerySubmissions().length) {
+            <div class="section-card premium-card">
+              <div class="section-header">
+                <h2 class="section-title">📸 Quest Proof Gallery</h2>
+                <button class="view-all-btn" (click)="setTab('activity')">View All →</button>
+              </div>
+              <div class="gallery-grid">
+                @for (sub of gallerySubmissions().slice(0, 9); track sub._id) {
+                  <a [routerLink]="'/submissions/' + sub._id" class="gallery-item">
+                    @if (sub.mediaUrls[0]) {
+                      <img [src]="sub.mediaUrls[0]" [alt]="questTitle(sub)" class="gallery-img" loading="lazy" />
+                    } @else {
+                      <div class="gallery-placeholder">📸</div>
+                    }
+                    <div class="gallery-overlay">
+                      <span class="gallery-quest">{{ questTitle(sub) }}</span>
+                      <span class="gallery-xp">+{{ sub.xpAmount }} XP</span>
+                    </div>
+                  </a>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- ── TAB: Activity ──────────────────────────────────────────────── -->
+      @if (activeTab() === 'activity') {
+        <div class="tab-content fade-in">
+          @if (submissions().length === 0) {
+            <div class="empty-state glass-card-static premium-empty">
+              <div class="empty-glow"></div>
+              <span class="empty-icon-lg">⚡</span>
+              <h3>No activity found in the realm</h3>
+              <p>{{ isOwnProfile() ? 'You haven\'t submitted any proof yet. Time to start your legend!' : 'This quester hasn\'t shared any of their journeys yet.' }}</p>
+              @if (isOwnProfile()) {
+                <button class="neon-btn sm-btn mt-4" routerLink="/quests">
+                  <span class="btn-icon">🗺️</span> Explore Quests
+                </button>
+              }
+            </div>
+          } @else {
+            <div class="activity-list">
+              @for (sub of submissions(); track sub._id) {
+                <a [routerLink]="'/submissions/' + sub._id" class="activity-row glass-card">
+                  <!-- Thumbnail -->
+                  <div class="act-thumb">
+                    @if (sub.mediaUrls[0]) {
+                      <img [src]="sub.mediaUrls[0]" [alt]="questTitle(sub)" class="act-img" />
+                    } @else {
+                      <div class="act-img-placeholder">📸</div>
+                    }
+                  </div>
+                  <!-- Info -->
+                  <div class="act-info">
+                    <span class="act-quest">{{ questTitle(sub) }}</span>
+                    <div class="act-meta">
+                      <span class="act-status" [class]="statusClass(sub.status)">{{ statusLabel(sub.status) }}</span>
+                      <span class="act-votes">✅ {{ sub.legitimVotes }} / ❌ {{ sub.notLegitVotes }}</span>
+                    </div>
+                    @if (hasDate(sub)) {
+                      <span class="act-timestamp">🕐 {{ subDate(sub) }}</span>
+                    }
+                  </div>
+                  <!-- XP + Comments -->
+                  <div class="act-right">
+                    <span class="act-xp">+{{ sub.xpAmount }} XP</span>
+                    <span class="act-comments">💬 {{ sub.commentCount }}</span>
+                  </div>
+                </a>
+              }
+            </div>
+          }
+        </div>
+      }
+
+      <!-- ── TAB: Achievements ──────────────────────────────────────────── -->
+      @if (activeTab() === 'achievements') {
+        <div class="tab-content fade-in">
+          
+          <!-- dynamic badge summary -->
+          <div class="badge-summary glass-card-static">
+            <div class="badge-sum-stat">
+              <span class="badge-sum-val">{{ achievementStatus().filter(x => x.unlocked).length }}</span>
+              <span class="badge-sum-lbl">Unlocked Milestones</span>
+            </div>
+            <div class="badge-sum-divider"></div>
+            <div class="badge-sum-stat">
+              <span class="badge-sum-val neon-orange">{{ achievementStatus().length }}</span>
+              <span class="badge-sum-lbl">Total Available</span>
+            </div>
+          </div>
+
+          <!-- Category Grids -->
+          @for (category of achievementCategories(); track category.name) {
+            <h3 class="sub-section-title">{{ category.name }} Timeline</h3>
+            <div class="achievements-grid">
+              @for (ach of category.achievements; track ach.id) {
+                <div class="badge-card glass-card-static" [class.unlocked]="ach.unlocked" [class.locked]="!ach.unlocked" [class]="ach.unlocked ? 'rarity-' + ach.rarity : ''">
+                  @if (ach.unlocked) {
+                    <div class="badge-glow"></div>
+                  }
+                  
+                  <div class="badge-header">
+                    <div class="badge-icon-wrap" [class.locked-icon]="!ach.unlocked">
+                      <span class="badge-icon-lg">{{ ach.icon }}</span>
+                    </div>
+                    <div class="badge-info-right">
+                      <span class="badge-name" [class.locked-text]="!ach.unlocked">{{ ach.title }}</span>
+                      @if (ach.unlocked) {
+                        <span class="badge-status-pill neon-green">✅ Unlocked</span>
+                      } @else {
+                        <span class="badge-status-pill locked-pill">🔒 Locked</span>
+                      }
+                    </div>
+                  </div>
+                  
+                  <p class="badge-desc" [class.locked-desc]="!ach.unlocked">{{ ach.desc }}</p>
+                  
+                  <div class="badge-progress-wrap">
+                    <div class="badge-progress-labels">
+                      <span class="prog-text">{{ ach.current }} / {{ ach.max }}</span>
+                      <span class="prog-pct">{{ ach.pct }}%</span>
+                    </div>
+                    <div class="badge-progress-track">
+                      <div class="badge-progress-fill" [style.width]="ach.pct + '%'" [class.fill-unlocked]="ach.unlocked"></div>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+
+      <!-- ── TAB: Settings (own profile only) ──────────────────────────── -->
+      @if (activeTab() === 'settings' && isOwnProfile()) {
+        <div class="tab-content fade-in">
+
+          <!-- Edit Profile Card -->
+          <div class="settings-card glass-card-static">
+            <div class="settings-header">
+              <h2 class="settings-title">✏️ Edit Profile</h2>
+              @if (!editMode()) {
+                <button class="neon-btn-outline sm-btn" (click)="startEdit()">Edit</button>
+              }
+            </div>
+
+            @if (editSuccess()) {
+              <div class="success-banner">✅ Profile updated successfully!</div>
+            }
+            @if (editError()) {
+              <div class="error-banner">⚠️ {{ editError() }}</div>
+            }
+
+            @if (editMode()) {
+              <div class="edit-form">
+                <div class="field">
+                  <label class="field-label">Full Name</label>
+                  <input class="input-field" type="text" [(ngModel)]="editFullName" [ngModelOptions]="{standalone: true}" placeholder="Your Name" maxlength="50" />
+                </div>
+                <div class="field">
+                  <label class="field-label">Username</label>
+                  <input class="input-field" type="text" [(ngModel)]="editUsername" [ngModelOptions]="{standalone: true}" placeholder="your_username" maxlength="30" />
+                </div>
+                <div class="field">
+                  <label class="field-label">Bio</label>
+                  <textarea class="input-field textarea" rows="3" [(ngModel)]="editBio" [ngModelOptions]="{standalone: true}" placeholder="Tell the realm about yourself..." maxlength="200"></textarea>
+                  <span class="char-count">{{ editBio().length }}/200</span>
+                </div>
+                <div class="edit-actions">
+                  <button class="neon-btn" (click)="saveProfile()" [disabled]="editLoading()">
+                    {{ editLoading() ? 'Saving...' : '💾 Save Changes' }}
+                  </button>
+                  <button class="neon-btn-outline" (click)="cancelEdit()" [disabled]="editLoading()">Cancel</button>
+                </div>
+              </div>
+            } @else {
+              <div class="view-fields">
+                <div class="view-field">
+                  <span class="vf-label">Username</span>
+                  <span class="vf-val">{{ user()!.username }}</span>
+                </div>
+                <div class="view-field">
+                  <span class="vf-label">Bio</span>
+                  <span class="vf-val">{{ user()!.bio || 'No bio set' }}</span>
+                </div>
+                <div class="view-field">
+                  <span class="vf-label">Level</span>
+                  <span class="vf-val">{{ levelIcon }} {{ user()!.level }}</span>
+                </div>
+                <div class="view-field">
+                  <span class="vf-label">Role</span>
+                  <span class="vf-val">{{ user()!.role }}</span>
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- Avatar Upload Card -->
+          <div class="settings-card glass-card-static">
+            <h2 class="settings-title">🖼️ Profile Picture</h2>
+            <div class="avatar-settings-row">
+              <div class="avatar-preview-wrap">
+                <img [src]="avatarPreview() ?? user()!.avatar" alt="Profile avatar" class="settings-avatar" />
+                @if (avatarLoading()) {
+                  <div class="avatar-loading-overlay"><span class="spin-icon">⚡</span></div>
+                }
+              </div>
+              <div class="avatar-actions">
+                <p class="avatar-info">Upload a new profile photo. PNG, JPG, WebP — max 5MB.</p>
+                <label class="neon-btn-outline avatar-upload-label" for="settings-avatar-input">
+                  📷 Choose Photo
+                  <input id="settings-avatar-input" type="file" accept="image/*" (change)="onAvatarChange($event, true)" hidden />
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Account Info Card -->
+          <div class="settings-card glass-card-static">
+            <h2 class="settings-title">📊 Account Stats</h2>
+            <div class="account-stats-grid">
+              <div class="acc-stat"><span class="acc-stat-val">{{ user()!.totalSubmissions }}</span><span class="acc-stat-lbl">Total Submissions</span></div>
+              <div class="acc-stat"><span class="acc-stat-val">{{ user()!.approvedSubmissions }}</span><span class="acc-stat-lbl">Approved</span></div>
+              <div class="acc-stat"><span class="acc-stat-val">{{ user()!.totalVotesCast }}</span><span class="acc-stat-lbl">Votes Cast</span></div>
+              <div class="acc-stat"><span class="acc-stat-val">{{ approvalRate }}%</span><span class="acc-stat-lbl">Approval Rate</span></div>
+            </div>
+          </div>
+
+          <!-- Theme Toggle Card -->
+          <div class="settings-card glass-card-static">
+            <h2 class="settings-title">🎨 Display Theme</h2>
+            <div class="theme-toggle-row">
+              <div class="theme-info">
+                <span class="theme-label">{{ isDark() ? '🌑 Dark Mode' : '☀️ Light Mode' }}</span>
+                <p class="theme-desc">{{ isDark() ? 'Classic dark neon — easy on the eyes.' : 'Bright light mode.' }}</p>
+              </div>
+              <button class="theme-toggle-btn" [class.theme-dark]="isDark()" [class.theme-light]="!isDark()" (click)="toggleTheme()">
+                <span class="theme-thumb"></span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Danger Zone -->
+          <div class="settings-card settings-danger glass-card-static">
+            <h2 class="settings-title danger-title">⚠️ Account</h2>
+            <p class="danger-desc">Sign out from your account on this device.</p>
+            <button class="danger-btn" (click)="signOut()">🚪 Sign Out</button>
+          </div>
+
+        </div>
+      }
+
+      <!-- ── Edit Profile Modal ─────────────────────────────────────────── -->
+      @if (showEditModal()) {
+        <div class="modal-backdrop" (click)="closeEditModal()">
+          <div class="modal-panel" (click)="$event.stopPropagation()">
+
+            <!-- Modal header -->
+            <div class="modal-header">
+              <div class="modal-title-wrap">
+                <span class="modal-icon">✏️</span>
+                <h2 class="modal-title">Edit Profile</h2>
+              </div>
+              <button class="modal-close-btn" (click)="closeEditModal()">✕</button>
+            </div>
+
+            <!-- Avatar quick-change inside modal -->
+            <div class="modal-avatar-row">
+              <div class="modal-avatar-wrap">
+                <img [src]="avatarPreview() ?? user()!.avatar" [alt]="user()!.username" class="modal-avatar" />
+                @if (avatarLoading()) {
+                  <div class="modal-avatar-loading"><span class="spin-icon">⚡</span></div>
+                }
+              </div>
+              <div class="modal-avatar-info">
+                <label class="neon-btn-outline sm-label" for="modal-avatar-input">
+                  📷 Change Photo
+                  <input id="modal-avatar-input" type="file" accept="image/*" (change)="onAvatarChange($event)" hidden />
+                </label>
+                <p class="modal-avatar-hint">PNG, JPG, WebP · max 5MB</p>
+              </div>
+            </div>
+
+            <!-- Form -->
+            <div class="modal-form">
+              <!-- Error -->
+              @if (editError()) {
+                <div class="modal-error">⚠️ {{ editError() }}</div>
+              }
+
+              <!-- Full Name -->
+              <div class="modal-field">
+                <label class="modal-label" for="modal-fullname">
+                  Full Name
+                </label>
+                <div class="input-wrap">
+                  <input
+                    id="modal-fullname"
+                    class="input-field modal-input"
+                    type="text"
+                    [(ngModel)]="editFullName"
+                    [ngModelOptions]="{standalone: true}"
+                    placeholder="Your Name (Optional)"
+                    maxlength="50"
+                  />
+                </div>
+              </div>
+
+              <!-- Username -->
+              <div class="modal-field">
+                <label class="modal-label" for="modal-username">
+                  Username <span class="field-required">*</span>
+                </label>
+                <div class="input-wrap">
+                  <span class="input-prefix">@</span>
+                  <input
+                    id="modal-username"
+                    class="input-field modal-input"
+                    type="text"
+                    [(ngModel)]="editUsername"
+                    [ngModelOptions]="{standalone: true}"
+                    placeholder="your_username"
+                    maxlength="30"
+                    [class.input-error]="editError() && !editUsername().trim()"
+                  />
+                </div>
+                <div class="field-meta">
+                  <span class="field-hint">3–30 chars, letters/numbers/underscore</span>
+                  <span class="char-count" [class.char-warn]="editUsername().length > 25">{{ editUsername().length }}/30</span>
+                </div>
+              </div>
+
+              <!-- Bio -->
+              <div class="modal-field">
+                <label class="modal-label" for="modal-bio">Bio</label>
+                <textarea
+                  id="modal-bio"
+                  class="input-field modal-input textarea"
+                  rows="3"
+                  [(ngModel)]="editBio"
+                  [ngModelOptions]="{standalone: true}"
+                  placeholder="Tell the realm about yourself..."
+                  maxlength="200"
+                ></textarea>
+                <div class="field-meta">
+                  <span class="field-hint">Describe yourself to the community</span>
+                  <span class="char-count" [class.char-warn]="editBio().length > 180">{{ editBio().length }}/200</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="modal-actions">
+              <button class="neon-btn modal-save-btn" (click)="saveProfile()" [disabled]="editLoading()">
+                @if (editLoading()) {
+                  <span class="spin-icon">⚡</span> Saving...
+                } @else {
+                  💾 Save Changes
+                }
+              </button>
+              <button class="neon-btn-outline" (click)="closeEditModal()" [disabled]="editLoading()">Cancel</button>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- ── Social List Modal ────────────────────────────────────────── -->
+      @if (socialListModalOpen()) {
+        <div class="modal-backdrop" (click)="closeSocialModal()">
+          <div class="modal-panel social-modal" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+              <div class="modal-title-wrap">
+                <span class="modal-icon">{{ socialListType() === 'followers' ? '👥' : '✨' }}</span>
+                <h2 class="modal-title">{{ socialListType() === 'followers' ? 'Followers' : 'Following' }}</h2>
+              </div>
+              <button class="modal-close-btn" (click)="closeSocialModal()">×</button>
+            </div>
+
+            <div class="modal-body custom-scrollbar">
+              @if (loadingSocialList()) {
+                <div class="social-loading">
+                  <span class="spin-icon">⏳</span>
+                  <p>Scanning registry...</p>
+                </div>
+              } @else if (socialListUsers().length === 0) {
+                <div class="social-empty">
+                  <span class="empty-icon-lg">{{ socialListType() === 'followers' ? '🌑' : '🌌' }}</span>
+                  <h3>No entities found</h3>
+                  <p>This path is yet to be traveled.</p>
+                </div>
+              } @else {
+                <div class="social-list">
+                  @for (u of socialListUsers(); track u._id) {
+                    <div class="social-user-card">
+                      <a [routerLink]="['/profile', u.username]" (click)="closeSocialModal()" class="social-user-link">
+                        <img [src]="u.avatar || 'assets/default-avatar.png'" [alt]="u.username" class="social-avatar" />
+                        <div class="social-user-info">
+                          <span class="social-username">@{{ u.username }}</span>
+                          <span class="social-bio">{{ u.bio || 'Questing through the void...' }}</span>
+                        </div>
+                      </a>
+                      
+                      @if (userSvc.profile()?._id !== u._id) {
+                        <div class="social-actions">
+                          <button 
+                            class="follow-btn-sm" 
+                            [class.following]="isFollowingInList(u._id)"
+                            (click)="toggleFollowInList(u)"
+                          >
+                            {{ isFollowingInList(u._id) ? 'Following' : 'Follow' }}
+                          </button>
+                          <a [routerLink]="['/chat']" [queryParams]="{ user: u._id }" (click)="closeSocialModal()" class="message-btn-sm" title="Message User">
+                            💬
+                          </a>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      }
+    } <!-- .profile-content (closes @else) -->
+  </section>
+
+  <!-- RIGHT: Persistent Utility Rail -->
+  <app-utility-rail />
+</div>

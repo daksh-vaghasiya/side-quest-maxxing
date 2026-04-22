@@ -1,0 +1,102 @@
+<div class="main-layout-grid">
+  <!-- CENTER: Primary Interaction Area -->
+  <section class="content-column fade-up">
+    <div class="com-header">
+      <div>
+        <h1 class="section-title">🌐 Community Quests</h1>
+        <p class="com-sub">Vote on community-submitted quest ideas. Top quests get promoted to the official board.</p>
+      </div>
+      <button class="neon-btn" (click)="showForm.set(!showForm())">
+        {{ showForm() ? '✕ Cancel' : '➕ Suggest a Quest' }}
+      </button>
+    </div>
+
+    <!-- Submission form -->
+    @if (showForm()) {
+      <div class="submit-form-card premium-card">
+        <h3 class="form-title">💡 Suggest a New Protocol</h3>
+        @if (formSuccess()) {
+          <p class="form-success">✅ Protocol submitted! The community will now evaluate it.</p>
+        } @else {
+          <div class="form-grid">
+            <div class="field">
+              <label class="field-label">Title</label>
+              <input class="input-field" type="text" [value]="form().title" (input)="updateForm('title', $any($event.target).value)" placeholder="e.g. Master the morning routine" />
+            </div>
+            <div class="field">
+              <label class="field-label">Category</label>
+              <select class="input-field" (change)="updateForm('category', $any($event.target).value)">
+                @for (cat of CATEGORIES; track cat) {
+                  <option [value]="cat" [selected]="form().category === cat">{{ categoryIcon(cat) }} {{ cat | titlecase }}</option>
+                }
+              </select>
+            </div>
+            <div class="field">
+              <label class="field-label">Difficulty</label>
+              <select class="input-field" (change)="updateForm('difficulty', $any($event.target).value)">
+                @for (d of DIFFICULTIES; track d) {
+                  <option [value]="d" [selected]="form().difficulty === d">{{ d }}</option>
+                }
+              </select>
+            </div>
+            <div class="field">
+              <label class="field-label">Suggested XP Reward</label>
+              <input class="input-field" type="number" min="10" max="1000" [value]="form().suggestedXpReward" (input)="updateForm('suggestedXpReward', +$any($event.target).value)" />
+            </div>
+            <div class="field full">
+              <label class="field-label">Description</label>
+              <textarea class="input-field" rows="4" [value]="form().description" (input)="updateForm('description', $any($event.target).value)" placeholder="What does the quest involve? What's the proof?"></textarea>
+            </div>
+            <div class="field full">
+              <label class="field-label">Requirements (one per line)</label>
+              <textarea class="input-field" rows="3" [value]="form().requirements" (input)="updateForm('requirements', $any($event.target).value)" placeholder="e.g. Video proof required&#10;Uninterrupted capture"></textarea>
+            </div>
+          </div>
+          @if (formError()) { <p class="form-error">⚠️ {{ formError() }}</p> }
+          <button class="neon-btn" (click)="submitQuest()" [disabled]="submitting()">{{ submitting() ? 'Submitting...' : '🚀 Submit Protocol Idea' }}</button>
+        }
+      </div>
+    }
+
+    <!-- Quest list -->
+    @if (loading()) {
+      <div class="cq-list">
+        @for (i of [1,2,3]; track i) { <div class="skeleton" style="height:120px; border-radius:var(--radius-lg);"></div> }
+      </div>
+    } @else if (quests().length === 0) {
+      <div class="premium-card" style="text-align: center;">
+        <p>No community protocols yet. Be the first to innovate!</p>
+      </div>
+    } @else {
+      <div class="cq-list">
+        @for (q of quests(); track q._id) {
+          <div class="cq-card premium-card">
+            <div class="cq-left">
+              <div class="cq-vote-col">
+                <button class="vote-up" [class.voted]="q.hasUpvoted" (click)="vote(q, 'up')">▲</button>
+                <span class="vote-score" [class.positive]="q.upvoteCount > q.downvoteCount">{{ q.upvoteCount - q.downvoteCount }}</span>
+                <button class="vote-down" [class.voted]="q.hasDownvoted" (click)="vote(q, 'down')">▼</button>
+              </div>
+            </div>
+            <div class="cq-body">
+              <div class="cq-header-row">
+                <span class="cq-status">{{ statusLabel(q) }}</span>
+                <span class="level-badge" [class]="'difficulty-' + q.difficulty">{{ q.difficulty }}</span>
+                <span class="cq-xp">+{{ q.suggestedXpReward }} XP</span>
+              </div>
+              <h3 class="cq-title">{{ categoryIcon(q.category) }} {{ q.title }}</h3>
+              <p class="cq-desc">{{ q.description | slice:0:150 }}{{ q.description.length > 150 ? '…' : '' }}</p>
+              <div class="cq-meta">
+                <span>by @{{ q.submittedBy.username }}</span>
+                <span>🗳️ {{ q.upvoteCount }} upvotes</span>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </section>
+
+  <!-- RIGHT: Persistent Utility Rail -->
+  <app-utility-rail />
+</div>

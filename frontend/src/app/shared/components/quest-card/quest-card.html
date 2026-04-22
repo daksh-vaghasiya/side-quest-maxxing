@@ -1,0 +1,62 @@
+<div class="quest-card premium-card">
+  <!-- Category & Difficulty header -->
+  <div class="card-header">
+    <span class="category-chip">
+      {{ categoryIcon }} {{ quest.category | titlecase }}
+    </span>
+    <span class="level-badge" [class]="difficultyColors">
+      {{ quest.difficulty }}
+    </span>
+  </div>
+
+  <!-- Title -->
+  <h3 class="quest-title">{{ quest.title }}</h3>
+
+  <!-- Description preview -->
+  <p class="quest-desc">{{ quest.description | slice:0:120 }}{{ quest.description.length > 120 ? '…' : '' }}</p>
+
+  <!-- XP + Stats row -->
+  <div class="quest-stats">
+    <div class="xp-reward">
+      <span class="xp-icon">⚡</span>
+      <span class="xp-value" [style.color]="xpColor">+{{ quest.xpReward }} XP</span>
+    </div>
+    <div class="quest-meta">
+      <span class="stat-pill">✅ {{ quest.completedCount }}</span>
+      <span class="stat-pill">🎯 {{ quest.acceptedCount }}</span>
+    </div>
+  </div>
+
+  <!-- Tags -->
+  @if (quest.tags.length) {
+    <div class="tags-row">
+      @for (tag of quest.tags.slice(0, 3); track tag) {
+        <span class="tag">#{{ tag }}</span>
+      }
+    </div>
+  }
+
+  <!-- Actions -->
+  @if (showActions) {
+    <div class="card-actions">
+      @if (quest.isCompleted || quest.submissionStatus === 'approved') {
+        <span class="completed-badge">✅ Completed</span>
+      } @else if (quest.submissionStatus === 'pending') {
+        <span class="pending-badge">⏳ Pending Review</span>
+      } @else if (quest.submissionStatus === 'rejected') {
+        <span class="rejected-badge">❌ Rejected</span>
+        <a [routerLink]="'/submit/' + quest._id" class="neon-btn submit-btn">📸 Retry Proof</a>
+        <button class="neon-btn-outline" (click)="abandon.emit(quest)">Abandon</button>
+      } @else if (quest.isAccepted) {
+        <a [routerLink]="'/submit/' + quest._id" class="neon-btn submit-btn">📸 Submit Proof</a>
+        <button class="neon-btn-outline" (click)="abandon.emit(quest)">Abandon</button>
+      } @else {
+        <a [routerLink]="'/quests/' + quest._id" class="neon-btn-outline view-btn">View Quest</a>
+        <button class="neon-btn" (click)="accept.emit(quest)">⚔️ Accept</button>
+      }
+    </div>
+  }
+
+  <!-- Glow effect on hover -->
+  <div class="card-glow"></div>
+</div>
