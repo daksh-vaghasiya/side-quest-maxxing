@@ -2,7 +2,6 @@ import { Component, inject, signal, computed, effect } from '@angular/core';
 import { RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { ClerkService } from '../../../core/services/clerk.service';
 import { UserService, NotificationService } from '../../../core/services/user-notification.service';
-import { ChatService } from '../../../core/services/chat.service';
 
 @Component({
   selector: 'app-navbar',
@@ -15,7 +14,6 @@ export class NavbarComponent {
   readonly clerk = inject(ClerkService);
   readonly userSvc = inject(UserService);
   readonly notifSvc = inject(NotificationService);
-  readonly chatSvc = inject(ChatService);
   readonly router = inject(Router);
 
   readonly mobileOpen = signal(false);
@@ -100,7 +98,6 @@ export class NavbarComponent {
     { path: '/feed',        label: 'Feed',        icon: '🌊' },
     { path: '/quests',      label: 'Quests',      icon: '⚔️' },
     { path: '/leaderboard', label: 'Leaders',     icon: '🏆' },
-    { path: '/chat',        label: 'Chat',        icon: '💬' },
     { path: '/community',   label: 'Community',   icon: '🌐' },
     { path: '/search',      label: 'People',      icon: '🔍' },
     { path: '/dashboard',   label: 'Dashboard',   icon: '🎮' },

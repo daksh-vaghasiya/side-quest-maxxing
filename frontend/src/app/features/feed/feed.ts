@@ -183,6 +183,12 @@ export class FeedPage implements OnInit {
     return typeof q === 'object' ? q.title : 'Quest';
   }
 
+  questLink(sub: Submission): any[] {
+    const q = sub.questId as any;
+    const id = (typeof q === 'object' && q._id) ? q._id : sub.questId;
+    return ['/quests', id];
+  }
+
   submitterName(sub: Submission): string {
     const u = sub.userId as any;
     return typeof u === 'object' ? u.username : 'User';

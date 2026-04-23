@@ -1,5 +1,6 @@
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:3001/api',
+  // Backend API used during local development. The backend defaults to port 3000.
+  apiUrl: 'http://localhost:3000/api',
   clerkPublishableKey: 'pk_test_YWRhcHRpbmctdG9tY2F0LTM3LmNsZXJrLmFjY291bnRzLmRldiQ',
 };

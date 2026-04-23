@@ -85,9 +85,6 @@
                   >
                     {{ followLoading() ? '…' : isFollowing() ? '✓ Following' : '+ Follow' }}
                   </button>
-                  <a [routerLink]="['/chat']" [queryParams]="{ user: user()?._id }" class="hero-message-btn" title="Send direct message">
-                    💬 Message
-                  </a>
                 </div>
               }
             </div>
@@ -628,9 +625,7 @@
                           >
                             {{ isFollowingInList(u._id) ? 'Following' : 'Follow' }}
                           </button>
-                          <a [routerLink]="['/chat']" [queryParams]="{ user: u._id }" (click)="closeSocialModal()" class="message-btn-sm" title="Message User">
-                            💬
-                          </a>
+                        <button class="message-btn-sm disabled" (click)="closeSocialModal()" title="Messaging disabled">💬</button>
                         </div>
                       }
                     </div>

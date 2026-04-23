@@ -29,17 +29,25 @@ app.use(helmet({
 }));
 
 // ─── CORS ─────────────────────────────────────────────────────────────────────
-const allowedOrigins = [
+const allowedOrigins = new Set([
   process.env.FRONTEND_URL || 'http://localhost:4200',
-  'http://localhost:4200',  // Angular dev server
+  'http://localhost:4200',  // Angular dev server default
   'http://localhost:3000',
-];
+]);
 
 app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (e.g. curl, mobile apps, server-to-server)
     if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) return callback(null, true);
+
+    // Exact match against configured allowed origins
+    if (allowedOrigins.has(origin)) return callback(null, true);
+
+    // During development, allow any localhost origin (different ports used by dev servers)
+    if (process.env.NODE_ENV !== 'production' && origin.startsWith('http://localhost')) {
+      return callback(null, true);
+    }
+
     console.warn(`[CORS] ❌ Blocked origin: ${origin}`);
     callback(new Error(`CORS policy: origin ${origin} not allowed`));
   },

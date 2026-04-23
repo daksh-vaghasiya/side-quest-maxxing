@@ -196,10 +196,11 @@
   font-weight: 700;
   font-size: 0.78rem;
   letter-spacing: 0.03em;
-  max-width: 200px;
+  max-width: 420px; /* allow longer quest titles to be visible */
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal; /* allow wrapping */
+  flex-wrap: wrap;
 }
 
 .pill-dot { width: 4px; height: 4px; background: var(--accent-primary); border-radius: 50%; flex-shrink: 0; }

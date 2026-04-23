@@ -16,7 +16,7 @@
 
   <!-- MID: Navigation Links -->
   <div class="sidebar-nav custom-scrollbar">
-    <div class="nav-section-label" [class.hidden]="isCollapsed()">Main Protocol</div>
+    <div class="nav-section-label" [class.hidden]="isCollapsed()"></div>
     @for (link of navLinks; track link.path) {
       <a [routerLink]="link.path" 
          routerLinkActive="nav-active" 
@@ -25,9 +25,7 @@
          (click)="closeMobile()">
         <span class="nav-item-icon">{{ link.icon }}</span>
         <span class="nav-item-label" [class.hidden]="isCollapsed()">{{ link.label }}</span>
-        @if (!isCollapsed() && link.path === '/chat' && chatSvc.totalUnread() > 0) {
-          <span class="item-badge">{{ chatSvc.totalUnread() }}</span>
-        }
+        
       </a>
     }
   </div>
@@ -77,7 +75,7 @@
       <div class="user-profile-section">
         @if (userSvc.profile()?.username) {
           <a [routerLink]="'/profile/' + userSvc.profile()!.username" class="user-block">
-            <img [src]="clerk.avatarUrl()" class="user-avatar" />
+            <img [src]="userSvc.profile()?.avatar || clerk.avatarUrl()" [alt]="userSvc.profile()?.username || 'User avatar'" class="user-avatar" />
             <div class="user-info" [class.hidden]="isCollapsed()">
               <span class="user-handle">@{{ userSvc.profile()!.username }}</span>
               <span class="user-lvl">Rank: {{ userSvc.profile()!.level }}</span>
@@ -85,7 +83,7 @@
           </a>
         } @else {
           <div class="user-block">
-            <img [src]="clerk.avatarUrl()" class="user-avatar" />
+            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=default" alt="Default avatar" class="user-avatar" />
             <div class="user-info" [class.hidden]="isCollapsed()">
               <span class="user-handle">Loading...</span>
             </div>

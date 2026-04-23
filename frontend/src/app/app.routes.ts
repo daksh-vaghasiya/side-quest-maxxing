@@ -40,10 +40,6 @@ export const routes: Routes = [
     loadComponent: () => import('./features/search/search').then(m => m.SearchPage),
   },
   {
-    path: 'chat',
-    loadComponent: () => import('./features/chat/chat').then(m => m.ChatPage),
-  },
-  {
     path: 'profile/:username',
     loadComponent: () => import('./features/profile/profile').then(m => m.ProfilePage),
   },

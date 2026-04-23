@@ -28,6 +28,30 @@
   flex-wrap: wrap;
 }
 
+/* Ensure the brief card's left and right areas have clear spacing between inline pieces
+   so text like username and the following label (Gains:) don't collapse together. */
+.brief-main {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-sm);
+}
+
+.brief-target {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end; /* keep 'Next Target' on same column but right-aligned */
+  gap: 0.25rem;
+}
+
+.brief-target .target-name {
+  white-space: nowrap; /* prevent username and label wrapping oddly */
+}
+
+.brief-target .target-gap {
+  color: var(--text-mute);
+  font-size: 0.95rem;
+}
+
 .brief-stat-item {
   display: flex;
   flex-direction: column;
@@ -136,6 +160,35 @@
 
 .podium-username { font-weight: 700; color: var(--text-main); font-size: var(--fs-sm); }
 .podium-xp       { font-family: var(--font-heading); font-size: 1rem; font-weight: 700; color: var(--neon-purple); }
+
+/* ── Podium (alternate HTML structure used in template) ───────────────────── */
+.podium-pillar { display:flex; flex-direction:column; align-items:center; gap:0.6rem; width:160px; }
+.podium-pillar .pillar-content { display:flex; flex-direction:column; align-items:center; gap:0.4rem; }
+.p-avatar-wrap { position:relative; display:flex; align-items:center; justify-content:center; }
+.p-avatar-wrap.champion .p-avatar { width:96px; height:96px; border-color: var(--lb-gold); box-shadow: 0 0 20px rgba(245,158,11,0.15); }
+.p-avatar-wrap .p-avatar { width:64px; height:64px; border-radius:50%; object-fit:cover; border:3px solid var(--border-glass); }
+.p-rank-tag { position:absolute; right:-6px; bottom:-6px; background:var(--bg-panel); padding:4px 6px; border-radius:8px; font-weight:700; font-size:0.85rem; border:1px solid var(--border-glass); }
+.p-rank-tag.gold { color: var(--lb-gold); }
+.p-rank-tag.silver { color: var(--lb-silver); }
+.p-rank-tag.bronze { color: var(--lb-bronze); }
+.p-info { text-align:center; }
+.p-name { display:block; font-weight:700; color:var(--text-main); }
+.p-xp { display:block; font-family:var(--font-heading); color:var(--neon-purple); font-weight:700; }
+.pillar-base { height:18px; width:100%; border-radius:6px; margin-top:8px; background:linear-gradient(180deg, rgba(0,0,0,0.08), transparent); }
+.gold-base { background:linear-gradient(180deg, rgba(245,158,11,0.12), rgba(245,158,11,0.04)); }
+.silver-base { background:linear-gradient(180deg, rgba(148,163,184,0.06), rgba(148,163,184,0.02)); }
+.bronze-base { background:linear-gradient(180deg, rgba(180,83,9,0.06), rgba(180,83,9,0.02)); }
+
+/* Remove default underline for anchors inside the podium and rank list, keep link behavior */
+.arena-podium a, a.rank-card {
+  text-decoration: none;
+
+  color: inherit;
+}
+
+/* Improve rank list layout when the .rank-card is an anchor */
+a.rank-card { display:flex; align-items:center; gap:var(--sp-lg); padding: var(--s-16) var(--s-24); }
+
 
 /* ── Rank List ───────────────────────────────────────────────────────────── */
 .rank-list { display: flex; flex-direction: column; gap: var(--s-8); }

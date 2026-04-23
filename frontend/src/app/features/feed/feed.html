@@ -63,9 +63,9 @@
                   </div>
                 </a>
                 <div class="post-meta-right">
-                  <span class="quest-pill" [title]="questTitle(sub)">
+                  <a class="quest-pill" [routerLink]="questLink(sub)" [title]="questTitle(sub)">
                     <span class="pill-dot"></span> {{ questTitle(sub) }}
-                  </span>
+                  </a>
                   <button class="menu-dots">•••</button>
                 </div>
               </header>
